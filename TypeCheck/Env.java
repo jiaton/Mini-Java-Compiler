@@ -28,8 +28,8 @@ public class Env {
         methodTable = new HashMap<String, MethodType>();
     }
 
-    public MyType getType(Identifier n) {
-        String identifier = n.toString();
+    public MyType getVariableType(Identifier n) {
+        String identifier = n.f0.toString();
         MyType returnType = null;
         returnType = varTable.get(identifier);
         if (isMethod && returnType == null) {
@@ -43,7 +43,7 @@ public class Env {
             System.out.println("Try to add parameter to a class!");
             exit(-1);
         }
-        if (methodTable.get(id).parameterList.get(n.f1.toString()) != null) {                     // TODO: 1/27/2020 check the return value of a hashmap is null if not found
+        if (methodTable.get(id).parameterList.get(n.f1.f0.toString()) != null) {                     // TODO: 1/27/2020 check the return value of a hashmap is null if not found
             System.out.println("The parameters for method are not distincted!");
             exit(-1);
         }
@@ -51,10 +51,10 @@ public class Env {
     }
 
     public void addVar(Type t, Identifier i) {
-        if (varTable.get(i.toString()) != null) {
+        if (varTable.get(i.f0.toString()) != null) {
             System.out.println("The varibles are not distincted!");
             exit(-1);
         }
-        varTable.put(i.toString(), MyType.toMyType(t));
+        varTable.put(i.f0.toString(), MyType.toMyType(t));
     }
 }
