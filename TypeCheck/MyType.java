@@ -8,7 +8,7 @@ import syntaxtree.Type;
 import java.util.Objects;
 
 class MyType implements Node {
-    // TODO: 2020/1/30 boolean isSubType(MyType t1, MyType t2); (how to check if superClass is not indicated?)
+
 
     NodeToken f0;
 

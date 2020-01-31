@@ -38,6 +38,10 @@ public class Env {
         return returnType;
     }
 
+    public MethodType getMethodType(String methodId) {
+        return methodTable.get(methodId);
+    }
+
     public void add(FormalParameter n) {
         if (!isMethod) {
             System.out.println("Try to add parameter to a class!");

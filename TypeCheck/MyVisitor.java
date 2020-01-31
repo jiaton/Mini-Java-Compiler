@@ -3,31 +3,32 @@ package TypeCheck;
 import syntaxtree.*;
 import visitor.*;
 
-import java.util.HashMap;
-import java.util.Stack;
+import java.util.*;
 
 import static java.lang.System.exit;
 
 //import TypeCheck.*;
 public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 	public Stack<Env> envStack;
+	public ArrayList<MyType> parameterTypeList;
 	public HashMap<String, Env> envTable;
 	public HashMap<String, String> typeTable;
 	public int MAXCLASSNUM = 1024;
-	public void initialize(){
-		typeTable.put("int",null);
-		typeTable.put("boolean",null);
-		typeTable.put("int[]",null);
+
+	public void initialize() {
+		typeTable.put("int", null);
+		typeTable.put("boolean", null);
+		typeTable.put("int[]", null);
 	}
 
 	// TODO: 1/30/2020 check tostring
 	// TODO: 1/30/2020 class.method
 
-	public boolean isChild(MyType child, MyType parent){
+	public boolean isChild(MyType child, MyType parent) {
 		String s = null;
 		String middle = child.toString();
 		String[] str = new String[MAXCLASSNUM];
-		int i=0;
+		int i = 0;
 		do{
 			if( (s = typeTable.get(middle)) == null)
 				break;
@@ -656,7 +657,53 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		}
 		return null;
 	}
-	// TODO: 2020/1/30 method call
+
+	/**
+	 * f0 -> IntegerLiteral()
+	 * | TrueLiteral()
+	 * | FalseLiteral()
+	 * | Identifier()
+	 * | ThisExpression()
+	 * | ArrayAllocationExpression()
+	 * | AllocationExpression()
+	 * | NotExpression()
+	 * | BracketExpression()
+	 *
+	 * @param n
+	 */
+	@Override
+	public MyType visit(PrimaryExpression n) {
+		return n.f0.accept(this);
+	}
+
+	/**
+	 * f0 -> Expression()
+	 * f1 -> ( ExpressionRest() )*
+	 *
+	 * @param n
+	 */
+	@Override
+	public MyType visit(ExpressionList n) {
+		MyType t1 = n.f0.accept(this);
+		parameterTypeList.add(t1);
+		n.f1.accept(this);
+		return null;
+	}
+
+	/**
+	 * f0 -> ","
+	 * f1 -> Expression()
+	 *
+	 * @param n
+	 */
+	@Override
+	public MyType visit(ExpressionRest n) {
+		n.f0.accept(this);
+		MyType t1 = n.f1.accept(this);
+		parameterTypeList.add(t1);
+		return null;
+	}
+
 
 	/**
 	 * f0 -> PrimaryExpression()
@@ -670,17 +717,25 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 	 */
 	@Override
 	public MyType visit(MessageSend n) {
-		MyType theClass = n.f0.accept(this);
+		parameterTypeList.clear();
+		MyType callerType = n.f0.accept(this);
 		n.f1.accept(this);
-		MyType id = n.f2.accept(this); //get identifier's id
+		n.f2.accept(this);
 		n.f3.accept(this);
-		n.f4.accept(this); //get parameters list
+		n.f4.accept(this);
 		n.f5.accept(this);
-		//get method type
-//		MethodType methodType = getMethodType(theClass, id);
-		//check each parameter whether it's subtype of required typek
-//		return new MethodType(construction);
-		return null;
+		String methodId = callerType.toString() + "." + n.f2.f0.tokenImage;
+		MethodType methodType = envTable.get(callerType.toString()).getMethodType(methodId); //get method type
+		//now we have parameterList and required TypeList already
+		for (int i = 0; i < parameterTypeList.size(); i++) {
+			if (!isChild(parameterTypeList.get(i), methodType.parameterList.get(i))) {
+				System.out.println("Method: " + this.getClass().getName() + " error");
+				System.exit(-1);
+			}
+
+		}
+		return methodType.returnValue;
+
 	}
 
 	// TODO: 2020/1/30 constant check
@@ -729,9 +784,12 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		n.f0.accept(this);
 		Env env = envStack.peek();
 		if (env != null) {
-			// TODO: 2020/1/30 return value?
-			return null;//return the class name?
+			return new MyType(env.classOfMethod);
+		} else {
+			System.out.println("Method: " + this.getClass().getName() + " error");
+			System.exit(-1);
 		}
+		return null;
 	}
 
 	/**
