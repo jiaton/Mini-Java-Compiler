@@ -728,7 +728,7 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		MethodType methodType = envTable.get(callerType.toString()).getMethodType(methodId); //get method type
 		//now we have parameterList and required TypeList already
 		for (int i = 0; i < parameterTypeList.size(); i++) {
-			if (!isChild(parameterTypeList.get(i), methodType.parameterList.get(i))) {
+			if (!isChild(parameterTypeList.get(i), methodType.getParameterTypeList().get(i))) {
 				System.out.println("Method: " + this.getClass().getName() + " error");
 				System.exit(-1);
 			}
