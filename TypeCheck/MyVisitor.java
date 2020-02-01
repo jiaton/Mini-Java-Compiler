@@ -1,5 +1,6 @@
 package TypeCheck;
 
+import java.util.Iterator;
 import syntaxtree.*;
 import visitor.*;
 
@@ -9,10 +10,10 @@ import static java.lang.System.exit;
 
 //import TypeCheck.*;
 public class MyVisitor extends GJNoArguDepthFirst<MyType> {
-	public Stack<Env> envStack;
-	public ArrayList<MyType> parameterTypeList;
-	public HashMap<String, Env> envTable;
-	public HashMap<String, String> typeTable;
+	public Stack<Env> envStack = new Stack<Env>();
+	public ArrayList<MyType> parameterTypeList = new ArrayList<>();
+	public HashMap<String, Env> envTable = new HashMap<>();
+	public HashMap<String, String> typeTable = new HashMap<>();
 	public int MAXCLASSNUM = 1024;
 
 	public void initialize() {
@@ -23,15 +24,72 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 
 	// TODO: 1/30/2020 check tostring
 	// TODO: 1/30/2020 class.method
+	public void SetMethodList(NodeListOptional n){
+		Vector<Node> nodes = n.nodes;
+		Env classOfMethod = envStack.peek();
+		Iterator<Node> iterator = nodes.iterator();
+		while (iterator.hasNext()) {
+			Node next = iterator.next();                    // TODO: 2/1/2020 check iterator.next
+			SetMethodType((MethodDeclaration)next,classOfMethod);
+		}
+	}
 
-	public boolean isChild(MyType child, MyType parent) {
+
+	/**Methoddeclaration n
+	 * f0 -> "public"
+	 * f1 -> Type()
+	 * f2 -> Identifier()
+	 * f3 -> "("
+	 * f4 -> ( FormalParameterList() )?
+	 * f5 -> ")"
+	 * f6 -> "{"
+	 * f7 -> ( VarDeclaration() )*
+	 * f8 -> ( Statement() )*
+	 * f9 -> "return"
+	 * f10 -> Expression()
+	 * f11 -> ";"
+	 * f12 -> "}"
+	 */
+	public void SetMethodType(MethodDeclaration n, Env classOfMethod){
+		DistinctParameterList((FormalParameterList) n.f4.node);
+		MethodType methodtype = new MethodType(MyType.toMyType(n.f1));
+		methodtype.returnValue=MyType.toMyType(n.f1);
+
+		methodtype.setParameterList((FormalParameterList) n.f4.node);
+
+		classOfMethod.methodTable.put(classOfMethod.id+"."+n.f2.f0.tokenImage,methodtype);
+	}
+
+	public void DistinctParameterList(FormalParameterList n){
+		if(n==null) return;
+		Vector<Node> nodes = n.f1.nodes;
+		nodes.add(n.f0);
+		HashSet<String> idset=new HashSet<>();
+		Iterator<Node> iterator = nodes.iterator();
+		while (iterator.hasNext()) {
+			FormalParameter next = (FormalParameter)iterator.next();                 // TODO: 2/1/2020 check error: function(int id, int id ,int id2)
+			if (!typeTable.containsKey(MyType.toMyType(next.f0).toString())) {
+			System.out.println("At the FormalParameter, the type "+MyType.toMyType(next.f0).toString()+" is not avaliable!");
+			exit(-1);
+		}
+			if(idset.contains(next.f1.f0.tokenImage)){
+				System.out.println("The parameters are not distincted!");
+				exit(-1);
+			}
+			idset.add(next.f1.f0.tokenImage);
+		}
+	}
+
+	public boolean isChildorTheSame(MyType child, MyType parent){
+		if(child.toString()==parent.toString())	return true;
 		String s = null;
 		String middle = child.toString();
 		String[] str = new String[MAXCLASSNUM];
 		int i = 0;
 		do{
-			if( (s = typeTable.get(middle)) == null)
+			if(!typeTable.containsKey(middle))
 				break;
+			s=typeTable.get(middle);
 			str[i] = s;
 			i++;
 			middle = s;
@@ -41,7 +99,32 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 			}
 		}while(true);
 		while(i>=0){
-			if(str[i].equals(parent.toString()))
+			if(str[i]==parent.toString())
+				return true;
+			i--;
+		}
+		return false;
+	}
+
+	public boolean isChild(MyType child, MyType parent) {
+		String s = null;
+		String middle = child.toString();
+		String[] str = new String[MAXCLASSNUM];
+		int i = 0;
+		do{
+			if(!typeTable.containsKey(middle))
+				break;
+			s=typeTable.get(middle);
+			str[i] = s;
+			i++;
+			middle = s;
+			if(i>MAXCLASSNUM){
+				System.out.println("In isChild, it loops for too many times!");
+				exit(-1);
+			}
+		}while(true);
+		while(i>=0){
+			if(str[i]==parent.toString())
 				return true;
 			i--;
 		}
@@ -49,10 +132,15 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 	}
 
 	public MyType checkIdentifier(Identifier n) {                    //check whether the identifier n is in the env
+		System.out.println("Checking Identifier "+n.f0.toString());
 		MyType _ret = null;
 		if (envStack.empty()) return null;
 		Env A = envStack.pop();
 		if (A.isMethod) {
+			if(envStack.empty()){
+				System.out.println("The Stack is empty at a method!");
+				exit(-1);
+			}
 			Env C = envStack.peek();
 			if (C.getVariableType(n) != null) {
 				envStack.push(A);
@@ -61,11 +149,11 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 			}
 		}
 		envStack.push(A);
-		if (A.getVariableType(n) != null) {
-			_ret = A.getVariableType(n);
-			return _ret;
-		}
-		return null;
+		MyType variabletype = null;
+		variabletype = A.getVariableType(n);
+		if(variabletype == null)	return null;
+		_ret = A.getVariableType(n);
+		return _ret;
 	}
 
 	public void addParameter(FormalParameter n) {            //add parameter to method env
@@ -75,6 +163,8 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		}
 		Env A = envStack.peek();
 		A.add(n);
+		//System.out.println("Try to list");
+		//A.ListMethods();
 	}
 
 
@@ -201,7 +291,7 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		n.f1.accept(this);
 		MyType ExpressionType = n.f2.accept(this);
 		n.f3.accept(this);
-		n.f4.accept(this);
+		n.f4.accept(this);                                        // TODO: 2/1/2020
 		n.f5.accept(this);
 		n.f6.accept(this);
 		if (ExpressionType.toString() != "boolean") {
@@ -247,7 +337,7 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		n.f3.accept(this);
 		n.f4.accept(this);
 		if (ExpressionType.toString() != "int") {
-			System.out.println("At a printstatement the type of the expression is not an int");
+			System.out.println("At a printstatement the type of the expression "+ExpressionType.toString()+" is not an int");
 			exit(-1);
 		}
 		return _ret;
@@ -271,6 +361,7 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 	 * f12 -> "}"
 	 */
 	public MyType visit(MethodDeclaration n) {                                //check method declaration
+		System.out.println("Checking methoddeclaration "+n.f2.f0.toString());
 		MyType _ret = null;
 		Env classenv = envStack.peek();
 		if(classenv.isMethod){
@@ -282,16 +373,25 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 			System.out.println("At the methodDeclaration, the method has been existed!");
 			exit(-1);
 		}
-		Env env = new Env(methodid, true, envStack.peek().id);        //Env(id, isMethod, classofmethod(or superclass))
+		MethodType methodtype=classenv.methodTable.get(methodid);
+		Env env = new Env(methodid, true, envStack.peek().id,methodtype);        //Env(id, isMethod, classofmethod(or superclass))
+		//System.out.println(envStack.peek().id);
 		envTable.put(env.id, env);
 		envStack.push(env);
+		System.out.println("try to Check MethodDeclaration nodes");
 		n.f0.accept(this);
 		MyType ReturnType = MyType.toMyType(n.f1);
 		n.f1.accept(this);
+		Env methodclass = envStack.peek();
+		//methodclass.methodTable.get(methodid).returnValue=new MyType(ReturnType.toString());		//Add methodTable in class of the method
 		n.f2.accept(this);
+		//System.out.println("finished checking identifier "+n.f2.f0.toString());
 		n.f3.accept(this);
 		//FormalParameterList ParameterList = n.f4;	need to be done?
+		//System.out.println("try to Check FormalParameterList in "+n.f2.f0.toString());
 		n.f4.accept(this);
+		//System.out.println(methodid+" here "+env.methodTable.get(methodid).getParameterTypeList().toString());
+		classenv.methodTable.put(methodid,env.methodTable.get(methodid));
 		n.f5.accept(this);
 		n.f6.accept(this);
 		//VarDeclaration* DeclarationList = n.f7;
@@ -307,34 +407,54 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		//}
 		//if(!Distinct(ParameterList))	exit(-1);
 		//if(!Distinct(DeclarationList))	exit(-1);
-		if (ReturnType != ExpressionType) {
-			System.out.println("At the methoddeclaration, the return type is not the return type");
+		if (ReturnType.toString() != ExpressionType.toString()) {
+			System.out.println("At the methoddeclaration, the return type "+ExpressionType.toString()+" is not the return type declared "+ReturnType.toString());
 			exit(-1);
 		}
-		if (envStack.pop().id != methodid) {
+		Env thismethod = envStack.pop();
+		if (thismethod.id != methodid) {
 			System.out.println("At the methoddeclaration,the method is not in the stack!");
 			exit(-1);
 		}
+		//MethodType methodtype = thismethod.methodTable.get(methodid);
+		//Env methodclass = envStack.peek();
+		//methodclass.methodTable.get(methodid).returnValue=ExpressionType;				//Add methodTable in class of the method
 		return _ret;
 	}
+
+	LinkedHashMap<String, MyType> parameterList;
+
+//	/**
+//	 * f0 -> FormalParameter()
+//	 * f1 -> ( FormalParameterRest() )*
+//	 */
+//	public MyType visit(FormalParameterList n){
+//		MyType _ret=null;
+//		MyType parametertype = n.f0.accept(this);
+//		parameterList.put()
+//		n.f1.accept(this);
+//		return _ret;
+//	}
 
 	/**
 	 * f0 -> Type()
 	 * f1 -> Identifier()
 	 */
 	public MyType visit(FormalParameter n) {
+		System.out.println("Checking FormalParameter "+n.f1.f0.toString());
 		MyType _ret = null;
 		n.f0.accept(this);
 		MyType IdentifierType = n.f1.accept(this);
-		if (!typeTable.containsKey(MyType.toMyType(n.f0).toString())) {
-			System.out.println("At the FormalParameter, the type is not avaliable!");
-			exit(-1);
-		}
-		if (IdentifierType != null) {
-			System.out.println("At the FormalParameter, identifiertype is token!");
-			exit(-1);
-		}
-		addParameter(n);
+//		if (!typeTable.containsKey(MyType.toMyType(n.f0).toString())) {
+//			System.out.println("At the FormalParameter, the type "+MyType.toMyType(n.f0).toString()+" is not avaliable!");
+//			exit(-1);
+//		}
+//		if (IdentifierType != null) {
+//			System.out.println("At the FormalParameter, identifiertype is token!");
+//			exit(-1);
+//		}
+//		//System.out.println("Now adding the Parameter");
+//		addParameter(n);
 		return _ret;
 	}
 
@@ -344,6 +464,7 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 	 * f2 -> ";"
 	 */
 	public MyType visit(VarDeclaration n) {
+		System.out.println("Checking VarDeclaration");
 		MyType _ret = null;
 		n.f0.accept(this);
 		MyType IdentifierType = n.f1.accept(this);
@@ -371,6 +492,7 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 	 * f5 -> "}"
 	 */
 	public MyType visit(ClassDeclaration n) {
+		System.out.println("Checking classdeclaration");
 		MyType _ret = null;
 		if (typeTable.containsKey(n.f1.f0.toString())) {
 			System.out.println("At classdeclaration, the id is already token!");
@@ -388,6 +510,12 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		envStack.push(env);
 		n.f2.accept(this);
 		n.f3.accept(this);
+		SetMethodList(n.f4);
+		Iterator<Map.Entry<String, MethodType>> iterator = env.methodTable.entrySet().iterator();
+		while (iterator.hasNext()) {
+			Map.Entry<String, MethodType> next = iterator.next();
+			System.out.println(next.getKey()+": "+next.getValue().parameterList.toString());
+		}
 		n.f4.accept(this);
 		n.f5.accept(this);
 		return _ret;
@@ -404,6 +532,7 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 	 * f7 -> "}"
 	 */
 	public MyType visit(ClassExtendsDeclaration n) {
+		System.out.println("Checking classextendsdeclaration");
 		MyType _ret = null;
 		if (typeTable.containsKey(n.f1.f0.toString())) {
 			System.out.println("At classdeclaration (extends), the id is already token!");
@@ -453,6 +582,7 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 	 * f17 -> "}"
 	 */
 	public MyType visit(MainClass n) {
+		System.out.println("Checking mainclass");
 		MyType _ret = null;
 		if (typeTable.containsKey(n.f1.f0.toString())) {
 			System.out.println("At mainclass, the id is used!");
@@ -499,11 +629,23 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 	 * f2 -> <EOF>
 	 */
 	public MyType visit(Goal n) {
+		System.out.println("Checking goal");
 		initialize();
 		MyType _ret = null;
-		n.f0.accept(this);
 		n.f1.accept(this);
+		n.f0.accept(this);
 		n.f2.accept(this);
+		return _ret;
+	}
+
+	/**
+	 * f0 -> ClassDeclaration()
+	 *       | ClassExtendsDeclaration()
+	 */
+	public MyType visit(TypeDeclaration n) {
+		System.out.println("Checking typedeclaration");
+		MyType _ret=null;
+		n.f0.accept(this);
 		return _ret;
 	}
 
@@ -512,7 +654,7 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 	 * f1 -> "&&"
 	 * f2 -> PrimaryExpression()
 	 *
-	 * @param n
+	 * @param
 	 */
 	@Override
 	public MyType visit(AndExpression n) {
@@ -583,6 +725,7 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		MyType t1 = n.f0.accept(this);
 		n.f1.accept(this);
 		MyType t2 = n.f2.accept(this);
+
 		if (t1.equals(t2) && t2.equals(new MyType("int"))) {
 			return new MyType("int");
 		} else {
@@ -604,6 +747,7 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		MyType t1 = n.f0.accept(this);
 		n.f1.accept(this);
 		MyType t2 = n.f2.accept(this);
+
 		if (t1.equals(t2) && t2.equals(new MyType("int"))) {
 			return new MyType("int");
 		} else {
@@ -633,7 +777,7 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 			System.out.println("Method: " + this.getClass().getName() + " error");
 			System.exit(-1);
 		}
-		return null;
+		return new MyType("int");
 	}
 
 	/**
@@ -657,6 +801,14 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		}
 		return null;
 	}
+
+	public MyType visit(IntegerLiteral n){
+		MyType _ret = new MyType("int");
+		n.f0.accept(this);
+		return _ret;
+	}
+
+
 
 	/**
 	 * f0 -> IntegerLiteral()
@@ -725,14 +877,25 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		n.f4.accept(this);
 		n.f5.accept(this);
 		String methodId = callerType.toString() + "." + n.f2.f0.tokenImage;
-		MethodType methodType = envTable.get(callerType.toString()).getMethodType(methodId); //get method type
+		MethodType methodType = null;
+		Env Methodenv;
+		Methodenv = envTable.get(callerType.toString());
+		if(Methodenv == null){
+			System.out.println("Method not found in MessageSend!");
+			System.exit(-1);
+		}
+		methodType = Methodenv.getMethodType(methodId);
+		if(methodType==null){
+			System.out.println("No "+methodId+" in "+Methodenv.id);
+			exit(-1);
+		}
+		 //get method type
 		//now we have parameterList and required TypeList already
 		for (int i = 0; i < parameterTypeList.size(); i++) {
-			if (!isChild(parameterTypeList.get(i), methodType.getParameterTypeList().get(i))) {
-				System.out.println("Method: " + this.getClass().getName() + " error");
+			if (!isChildorTheSame(parameterTypeList.get(i), methodType.getParameterTypeList().get(i))) {
+				System.out.println("Parameterlist: " + parameterTypeList.toString() + " not match the list of "+ methodId + methodType.getParameterTypeList().toString());
 				System.exit(-1);
 			}
-
 		}
 		return methodType.returnValue;
 
@@ -784,7 +947,9 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		n.f0.accept(this);
 		Env env = envStack.peek();
 		if (env != null) {
-			return new MyType(env.classOfMethod);
+			MyType mt = new MyType(env.classOfMethod);
+
+			return mt;
 		} else {
 			System.out.println("Method: " + this.getClass().getName() + " error");
 			System.exit(-1);
