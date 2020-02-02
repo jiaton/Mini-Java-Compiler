@@ -31,16 +31,89 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 
 	// TODO: 1/30/2020 check tostring
 	// TODO: 1/30/2020 class.method
-	public void SetMethodList(NodeListOptional n){
+	public void SetMethodList(NodeListOptional n,Env classOfMethod) {
 		Vector<Node> nodes = n.nodes;
-		Env classOfMethod = envStack.peek();
 		Iterator<Node> iterator = nodes.iterator();
 		while (iterator.hasNext()) {
 			Node next = iterator.next();                    // TODO: 2/1/2020 check iterator.next
-			SetMethodType((MethodDeclaration)next,classOfMethod);
+			SetMethodType((MethodDeclaration) next, classOfMethod);
 		}
 	}
 
+	public void SetFields(NodeListOptional n,Env classOfFields){
+		Vector<Node> nodes = n.nodes;
+		Iterator<Node> iterator = nodes.iterator();
+		while (iterator.hasNext()) {
+			Node next = iterator.next();                    // TODO: 2/1/2020 check iterator.next
+			SetField((VarDeclaration) next, classOfFields);
+		}
+	}
+	/**
+	 * f0 -> Type()
+	 * f1 -> Identifier()
+	 * f2 -> ";"
+	 */
+	public void SetField(VarDeclaration n, Env classOfFields){
+		if (!typeTable.containsKey(MyType.toMyType(n.f0).toString())) {
+			System.out.println("At the VarDeclaration, the type is not avaliable!");
+			exit(-1);
+		}
+		MyType IdentifierType = checkIdentifier(n.f1,classOfFields);
+		if (IdentifierType != null) {
+			System.out.println("At the VarDeclaration, the id is token!");
+			exit(-1);
+		}
+		addVar(n.f0, n.f1,classOfFields);
+	}
+	/**
+	 * Grammar production:
+	 * f0 -> ClassDeclaration()
+	 *       | ClassExtendsDeclaration()
+	 */
+	/**
+	 * f0 -> "class"
+	 * f1 -> Identifier()
+	 * f2 -> "{"
+	 * f3 -> ( VarDeclaration() )*
+	 * f4 -> ( MethodDeclaration() )*
+	 * f5 -> "}"
+	 */
+	public void setClassList(NodeListOptional typedeclaration) {
+		Vector<Node> nodes = typedeclaration.nodes;
+		//Env root = envStack.peek();
+		Iterator<Node> iterator = nodes.iterator();
+		while (iterator.hasNext()) {
+			TypeDeclaration next =(TypeDeclaration) iterator.next();
+			if(next.f0.which==0){
+				//classdeclaration
+				ClassDeclaration n = (ClassDeclaration) next.f0.choice;
+				if (typeTable.containsKey(n.f1.f0.toString())) {
+					System.out.println("At setClassList, the id is already token!");
+					exit(-1);
+				}
+				typeTable.put(n.f1.f0.toString(), null);
+				Env env = new Env(n.f1.f0.toString(), false, null);    //Env(id, isMethod)
+				envTable.put(env.id, env);
+				SetFields(n.f3, env);
+				SetMethodList(n.f4,env);
+			}else{
+				//extends
+				ClassExtendsDeclaration n = (ClassExtendsDeclaration) next.f0.choice;
+				if (typeTable.containsKey(n.f1.f0.toString())) {
+					System.out.println("At classdeclaration (extends), the id is already token!");
+					exit(-1);
+				}
+				typeTable.put(n.f1.f0.toString(), n.f3.f0.toString());                    // TODO: 1/27/2020 check mytype
+				Env env = new Env(n.f1.f0.toString(), false, n.f3.f0.toString());    //Env(id, idM)
+				envTable.put(env.id, env);
+				SetFields(n.f5, env);
+				SetMethodList(n.f6,env);
+				fieldExtends(n.f1.f0.toString(), n.f3.f0.toString());                    //VarExtends(id, idM)
+				MethodExtends(n.f1.f0.toString(), n.f3.f0.toString());                //MethodExtends(id, idM)
+
+			}
+		}
+	}
 
 	/**Methoddeclaration n
 	 * f0 -> "public"
@@ -144,6 +217,14 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		return false;
 	}
 
+	public MyType checkIdentifier(Identifier n, Env env){
+		if(env.varTable.containsKey(n.f0.tokenImage)){
+			System.out.println("When checking identifier, the identifier is token");
+			exit(-1);
+		}
+		return env.varTable.get(n.f0.tokenImage);
+	}
+
 	public MyType checkIdentifier(Identifier n) {                    //check whether the identifier n is in the env
 		System.out.println("Checking Identifier "+n.f0.toString());
 		MyType _ret = null;
@@ -169,25 +250,29 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		return _ret;
 	}
 
-	public void addParameter(FormalParameter n) {            //add parameter to method env
-		if (envStack.empty()) {
-			System.out.println("When adding the Parameter, the stack is empty");
-			exit(-1);
-		}
-		Env A = envStack.peek();
-		A.add(n);
-		//System.out.println("Try to list");
-		//A.ListMethods();
-	}
+//	public void addParameter(FormalParameter n) {            //add parameter to method env
+//		if (envStack.empty()) {
+//			System.out.println("When adding the Parameter, the stack is empty");
+//			exit(-1);
+//		}
+//		Env A = envStack.peek();
+//		A.add(n);
+//		//System.out.println("Try to list");
+//		//A.ListMethods();
+//	}
 
 
-	public void addVar(Type f0, Identifier f1) {                //add varible to env
-		if (envStack.empty()) {
-			System.out.println("At addVar, the stack is empty");
-			exit(-1);
-		}
-		Env A = envStack.peek();
-		A.addVar(f0, f1);
+//	public void addVar(Type f0, Identifier f1) {                //add varible to env
+//		if (envStack.empty()) {
+//			System.out.println("At addVar, the stack is empty");
+//			exit(-1);
+//		}
+//		Env A = envStack.peek();
+//		A.addVar(f0, f1);
+//	}
+
+	public void addVar(Type f0,Identifier f1, Env env){
+		env.addVar(f0, f1);
 	}
 
 	public void fieldExtends(String id, String idM) {            //put parent class fields to child
@@ -480,17 +565,9 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		System.out.println("Checking VarDeclaration");
 		MyType _ret = null;
 		n.f0.accept(this);
-		MyType IdentifierType = n.f1.accept(this);
+		n.f1.accept(this);
 		n.f2.accept(this);
-		if (!typeTable.containsKey(MyType.toMyType(n.f0).toString())) {
-			System.out.println("At the VarDeclaration, the type is not avaliable!");
-			exit(-1);
-		}
-		if (IdentifierType != null) {
-			System.out.println("At the VarDeclaration, the id is token!");
-			exit(-1);
-		}
-		addVar(n.f0, n.f1);
+
 		return _ret;
 	}
 
@@ -507,28 +584,16 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 	public MyType visit(ClassDeclaration n) {
 		System.out.println("Checking classdeclaration");
 		MyType _ret = null;
-		if (typeTable.containsKey(n.f1.f0.toString())) {
-			System.out.println("At classdeclaration, the id is already token!");
-			exit(-1);
-		}
-		typeTable.put(n.f1.f0.toString(), null);
 		n.f0.accept(this);
-		MyType Identifier = n.f1.accept(this);
-		if (Identifier != null) {
-			System.out.println("At classdeclaration, something wrong with id");
+		n.f1.accept(this);
+		if(!envTable.containsKey(n.f1.f0.toString())){
+			System.out.println("In classdeclaration, class not found in the table!");
 			exit(-1);
 		}
-		Env env = new Env(n.f1.f0.toString(), false, null);    //Env(id, isMethod)
-		envTable.put(env.id, env);
+		Env env = envTable.get(n.f1.f0.toString());
 		envStack.push(env);
 		n.f2.accept(this);
 		n.f3.accept(this);
-		SetMethodList(n.f4);
-		Iterator<Map.Entry<String, MethodType>> iterator = env.methodTable.entrySet().iterator();
-		while (iterator.hasNext()) {
-			Map.Entry<String, MethodType> next = iterator.next();
-			System.out.println(next.getKey()+": "+next.getValue().parameterList.toString());
-		}
 		n.f4.accept(this);
 		n.f5.accept(this);
 		return _ret;
@@ -547,27 +612,23 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 	public MyType visit(ClassExtendsDeclaration n) {
 		System.out.println("Checking classextendsdeclaration");
 		MyType _ret = null;
-		if (typeTable.containsKey(n.f1.f0.toString())) {
-			System.out.println("At classdeclaration (extends), the id is already token!");
+
+
+		if(!envTable.containsKey(n.f1.f0.toString())){
+			System.out.println("In classextendsdeclaration, class not found in the table!");
 			exit(-1);
 		}
-		typeTable.put(n.f1.f0.toString(), n.f3.f0.toString());                    // TODO: 1/27/2020 check mytype
-		n.f0.accept(this);
-		MyType Identifier = n.f1.accept(this);
-		if (Identifier != null) {
-			System.out.println("At classdeclaration (extends), the id is not null!");
-			exit(-1);
-		}
-		Env env = new Env(n.f1.f0.toString(), false, n.f3.f0.toString());    //Env(id, idM)
-		envTable.put(env.id, env);
+		Env env = envTable.get(n.f1.f0.toString());
 		envStack.push(env);
+		n.f0.accept(this);
+		n.f1.accept(this);
 		n.f2.accept(this);
 		n.f3.accept(this);
 		n.f4.accept(this);
 		n.f5.accept(this);
-		fieldExtends(n.f1.f0.toString(), n.f3.f0.toString());                    //VarExtends(id, idM)
+		//fieldExtends(n.f1.f0.toString(), n.f3.f0.toString());                    //VarExtends(id, idM)
 		n.f6.accept(this);
-		MethodExtends(n.f1.f0.toString(), n.f3.f0.toString());                //MethodExtends(id, idM)
+		//MethodExtends(n.f1.f0.toString(), n.f3.f0.toString());                //MethodExtends(id, idM)
 		n.f7.accept(this);
 		return _ret;
 	}
@@ -645,6 +706,7 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		System.out.println("Checking goal");
 		initialize();
 		MyType _ret = null;
+		setClassList(n.f1);
 		n.f1.accept(this);
 		n.f0.accept(this);
 		n.f2.accept(this);
