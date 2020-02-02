@@ -7,6 +7,7 @@ import visitor.*;
 import java.util.*;
 
 import static java.lang.System.exit;
+import static java.lang.System.setErr;
 
 //import TypeCheck.*;
 public class MyVisitor extends GJNoArguDepthFirst<MyType> {
@@ -63,21 +64,27 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 	public void DistinctParameterList(FormalParameterList n){
 		if(n==null) return;
 		Vector<Node> nodes = n.f1.nodes;
-		nodes.add(n.f0);
 		HashSet<String> idset=new HashSet<>();
-		Iterator<Node> iterator = nodes.iterator();
-		while (iterator.hasNext()) {
-			FormalParameter next = (FormalParameter)iterator.next();                 // TODO: 2/1/2020 check error: function(int id, int id ,int id2)
-			if (!typeTable.containsKey(MyType.toMyType(next.f0).toString())) {
-			System.out.println("At the FormalParameter, the type "+MyType.toMyType(next.f0).toString()+" is not avaliable!");
-			exit(-1);
-		}
-			if(idset.contains(next.f1.f0.tokenImage)){
+		for (Node node : nodes){
+			if (!typeTable.containsKey(MyType.toMyType(((FormalParameterRest)node).f1.f0).toString())) {
+				System.out.println("At the FormalParameter, the type " + MyType.toMyType(((FormalParameterRest)node).f1.f0).toString() + " is not avaliable!");
+				exit(-1);
+			}
+			if(idset.contains(((FormalParameterRest)node).f1.f1.f0.tokenImage)){
 				System.out.println("The parameters are not distincted!");
 				exit(-1);
 			}
-			idset.add(next.f1.f0.tokenImage);
+			idset.add(((FormalParameterRest)node).f1.f1.f0.tokenImage);
 		}
+		if(!typeTable.containsKey(MyType.toMyType(n.f0.f0).toString())){
+			System.out.println("At the FormalParameter, the type " + MyType.toMyType(n.f0.f0).toString() + " is not avaliable!");
+			exit(-1);
+		}
+		if(idset.contains(n.f0.f1.f0.tokenImage)){
+			System.out.println("The parameters are not distincted!");
+			exit(-1);
+		}
+
 	}
 
 	public boolean isChildorTheSame(MyType child, MyType parent){
@@ -891,6 +898,10 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		}
 		 //get method type
 		//now we have parameterList and required TypeList already
+		if(parameterTypeList.size()!=methodType.getParameterTypeList().size()){
+			System.out.println("Parameterlist: " + parameterTypeList.toString() + " not match the list of "+ methodId + methodType.getParameterTypeList().toString());
+			System.exit(-1);
+		}
 		for (int i = 0; i < parameterTypeList.size(); i++) {
 			if (!isChildorTheSame(parameterTypeList.get(i), methodType.getParameterTypeList().get(i))) {
 				System.out.println("Parameterlist: " + parameterTypeList.toString() + " not match the list of "+ methodId + methodType.getParameterTypeList().toString());
