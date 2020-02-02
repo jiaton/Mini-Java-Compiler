@@ -11,16 +11,22 @@ import static java.lang.System.setErr;
 
 //import TypeCheck.*;
 public class MyVisitor extends GJNoArguDepthFirst<MyType> {
+	/*
+	 * EnvStack Rules:
+	 * There's a root env on the bottom of the stack, but you don't have to use it as the prefix. eg: root.Main or root.A, just Main or A.
+	 * */
 	public Stack<Env> envStack = new Stack<Env>();
 	public ArrayList<MyType> parameterTypeList = new ArrayList<>();
 	public HashMap<String, Env> envTable = new HashMap<>();
 	public HashMap<String, String> typeTable = new HashMap<>();
 	public int MAXCLASSNUM = 1024;
+	public static String ROOT = "root is absolutely no duplication";
 
 	public void initialize() {
 		typeTable.put("int", null);
 		typeTable.put("boolean", null);
 		typeTable.put("int[]", null);
+		envStack.push(new Env(ROOT, false, null));
 	}
 
 	// TODO: 1/30/2020 check tostring
@@ -642,6 +648,7 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		n.f1.accept(this);
 		n.f0.accept(this);
 		n.f2.accept(this);
+		System.out.println("Type Checking finished!");
 		return _ret;
 	}
 

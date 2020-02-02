@@ -110,4 +110,21 @@ public class Env {
         }
         varTable.put(i.f0.toString(), MyType.toMyType(t));
     }
+
+    public void addVar(MyType myType, Identifier identifier) {
+        if (varTable.get(identifier.f0.toString()) != null) {
+            System.out.println("The varibles are not distincted!");
+            exit(-1);
+        }
+        varTable.put(identifier.f0.toString(), myType);
+    }
+
+    public void addVar(MyType myType, String identifierName) {
+        if (varTable.get(identifierName) != null) {
+            System.out.println("The varibles are not distincted!");
+            exit(-1);
+        }
+        varTable.put(identifierName, myType);
+    }
+
 }
