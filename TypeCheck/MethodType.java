@@ -1,9 +1,6 @@
 package TypeCheck;
 
-import syntaxtree.FormalParameter;
-import syntaxtree.FormalParameterList;
-import syntaxtree.MethodDeclaration;
-import syntaxtree.Node;
+import syntaxtree.*;
 
 import java.util.*;
 
@@ -31,8 +28,8 @@ public class MethodType {
         Vector<Node> nodes = n.f1.nodes;
         Iterator<Node> iterator = nodes.iterator();
         while (iterator.hasNext()) {
-            Node next = iterator.next();                    // TODO: 2/1/2020 check iterator.next
-            this.setParameterList((FormalParameter)next);
+            FormalParameterRest next = (FormalParameterRest) iterator.next();                    // TODO: 2/1/2020 check iterator.next
+            this.setParameterList(next.f1);
         }
     }
 
