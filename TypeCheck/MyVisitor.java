@@ -98,7 +98,7 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		LinkedHashMap<String, String> sortedClassTable = new LinkedHashMap<>();
 		while (sortedClassTable.size() != classTable.size()) {
 			for (Map.Entry<String, String> entry : classTable.entrySet()) {
-				if (entry.getValue() == null || sortedClassTable.get(entry.getValue()) != null) {
+				if (entry.getValue() == null || sortedClassTable.containsKey(entry.getValue())) {
 					sortedClassTable.put(entry.getKey(), entry.getValue());
 				}
 			}
@@ -135,8 +135,6 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 				typeTable.put(n.f1.f0.toString(), null);
 				Env env = new Env(n.f1.f0.toString(), false, null);    //Env(id, isMethod)
 				envTable.put(env.id, env);
-				SetFields(n.f3, env);
-				SetMethodList(n.f4, env);
 			} else {
 				ClassExtendsDeclaration n = (ClassExtendsDeclaration) next.f0.choice;
 				if (typeTable.containsKey(n.f1.f0.toString())) {
@@ -146,13 +144,31 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 				typeTable.put(n.f1.f0.toString(), n.f3.f0.toString());                    // TODO: 1/27/2020 check mytype
 				Env env = new Env(n.f1.f0.toString(), false, n.f3.f0.toString());    //Env(id, idM)
 				envTable.put(env.id, env);
+			}
+		}
+		for (Node node : sortedNodes) {
+			TypeDeclaration next = (TypeDeclaration) node;
+			if (next.f0.which == 0) {
+				//classdeclaration
+				ClassDeclaration n = (ClassDeclaration) next.f0.choice;
+				Env env = envTable.get(n.f1.f0.tokenImage);
+				SetFields(n.f3, env);
+				SetMethodList(n.f4, env);
+			}
+		}
+		for (Node node : sortedNodes) {
+			TypeDeclaration next = (TypeDeclaration) node;
+			if (next.f0.which != 0) {
+				//extends
+				ClassExtendsDeclaration n = (ClassExtendsDeclaration) next.f0.choice;
+				Env env = envTable.get(n.f1.f0.tokenImage);
 				SetFields(n.f5, env);
 				SetMethodList(n.f6, env);
 				fieldExtends(n.f1.f0.toString(), n.f3.f0.toString());                    //VarExtends(id, idM)
 				MethodExtends(n.f1.f0.toString(), n.f3.f0.toString());                //MethodExtends(n.f1.f0.toString(), n.f3.f0.toString());                //MethodExtends(id, idM)
+
 			}
 		}
-
 	}
 	/**Methoddeclaration n
 	 * f0 -> "public"
