@@ -81,7 +81,50 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 	public void setClassList(NodeListOptional typedeclaration) {
 		Vector<Node> nodes = typedeclaration.nodes;
 		//Env root = envStack.peek();
+		LinkedHashMap<String, String> classTable = new LinkedHashMap<>();
+//		Construct the classTable
 		for (Node node : nodes) {
+			TypeDeclaration next = (TypeDeclaration) node;
+			if (next.f0.which == 0) {
+				ClassDeclaration n = (ClassDeclaration) next.f0.choice;
+				classTable.put(n.f1.f0.toString(), null);
+
+			} else {
+				ClassExtendsDeclaration n = (ClassExtendsDeclaration) next.f0.choice;
+				classTable.put(n.f1.f0.toString(), n.f3.f0.toString());
+			}
+		}
+		/*sort the class topologically*/
+		LinkedHashMap<String, String> sortedClassTable = new LinkedHashMap<>();
+		while (sortedClassTable.size() != classTable.size()) {
+			for (Map.Entry<String, String> entry : classTable.entrySet()) {
+				if (entry.getValue() == null || sortedClassTable.get(entry.getValue()) != null) {
+					sortedClassTable.put(entry.getKey(), entry.getValue());
+				}
+			}
+		}
+		/*get the right order of nodes using the sortedClassTable*/
+		Vector<Node> sortedNodes = new Vector<>();
+		for (Map.Entry<String, String> entry : sortedClassTable.entrySet()) {
+			for (Node node : nodes) {
+				TypeDeclaration next = (TypeDeclaration) node;
+				String className;
+				if (next.f0.which == 0) {
+					ClassDeclaration n = (ClassDeclaration) next.f0.choice;
+					className = n.f1.f0.toString();
+				} else {
+					ClassExtendsDeclaration n = (ClassExtendsDeclaration) next.f0.choice;
+					className = n.f1.f0.toString();
+				}
+				if (className.equals(entry.getKey())) {
+					sortedNodes.add(node);
+					break;
+				}
+
+			}
+		}
+		/*Set environments for each node in the order of sortedNodes*/
+		for (Node node : sortedNodes) {
 			TypeDeclaration next = (TypeDeclaration) node;
 			if (next.f0.which == 0) {
 				ClassDeclaration n = (ClassDeclaration) next.f0.choice;
@@ -92,6 +135,8 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 				typeTable.put(n.f1.f0.toString(), null);
 				Env env = new Env(n.f1.f0.toString(), false, null);    //Env(id, isMethod)
 				envTable.put(env.id, env);
+				SetFields(n.f3, env);
+				SetMethodList(n.f4, env);
 			} else {
 				ClassExtendsDeclaration n = (ClassExtendsDeclaration) next.f0.choice;
 				if (typeTable.containsKey(n.f1.f0.toString())) {
@@ -101,31 +146,13 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 				typeTable.put(n.f1.f0.toString(), n.f3.f0.toString());                    // TODO: 1/27/2020 check mytype
 				Env env = new Env(n.f1.f0.toString(), false, n.f3.f0.toString());    //Env(id, idM)
 				envTable.put(env.id, env);
-			}
-		}
-		for (Node node : nodes) {
-			TypeDeclaration next = (TypeDeclaration) node;
-			if (next.f0.which == 0) {
-				//classdeclaration
-				ClassDeclaration n = (ClassDeclaration) next.f0.choice;
-				Env env = envTable.get(n.f1.f0.tokenImage);
-				SetFields(n.f3, env);
-				SetMethodList(n.f4, env);
-			}
-		}
-		for (Node node : nodes) {
-			TypeDeclaration next = (TypeDeclaration) node;
-			if (next.f0.which != 0) {
-				//extends
-				ClassExtendsDeclaration n = (ClassExtendsDeclaration) next.f0.choice;
-				Env env = envTable.get(n.f1.f0.tokenImage);
 				SetFields(n.f5, env);
 				SetMethodList(n.f6, env);
 				fieldExtends(n.f1.f0.toString(), n.f3.f0.toString());                    //VarExtends(id, idM)
 				MethodExtends(n.f1.f0.toString(), n.f3.f0.toString());                //MethodExtends(n.f1.f0.toString(), n.f3.f0.toString());                //MethodExtends(id, idM)
-
 			}
 		}
+
 	}
 	/**Methoddeclaration n
 	 * f0 -> "public"
