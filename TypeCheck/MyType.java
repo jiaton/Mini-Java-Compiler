@@ -53,7 +53,7 @@ class MyType implements Node {
                 mt.f0.tokenImage = id.f0.tokenImage;
                 break;
             default:
-                System.out.println("error when type to mytype");
+                System.out.println("Type error");
                 exit(-1);
         }
         //System.out.println("here!!!!!!!!type is "+mt.toString());

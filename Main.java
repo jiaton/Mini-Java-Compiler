@@ -11,8 +11,9 @@ public class Main {
 		try {
 			InputStream in = new FileInputStream(args[1]);
 			Node goal = new MiniJavaParser(in).Goal();
-			System.out.println("visit starting");
+
 			goal.accept(new MyVisitor());
+			System.out.println("successfully");
 		} catch (ParseException | FileNotFoundException e) {
 			e.printStackTrace();
 		}

@@ -55,12 +55,14 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 	 */
 	public void SetField(VarDeclaration n, Env classOfFields){
 		if (!typeTable.containsKey(MyType.toMyType(n.f0).toString())) {
-			System.out.println("At the VarDeclaration, the type is not avaliable!");
+
+			System.out.println("Type error");
 			exit(-1);
 		}
 		MyType IdentifierType = checkIdentifier(n.f1,classOfFields);
 		if (IdentifierType != null) {
-			System.out.println("At the VarDeclaration, the id is token!");
+
+			System.out.println("Type error");
 			exit(-1);
 		}
 		addVar(n.f0, n.f1,classOfFields);
@@ -129,7 +131,8 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 			if (next.f0.which == 0) {
 				ClassDeclaration n = (ClassDeclaration) next.f0.choice;
 				if (typeTable.containsKey(n.f1.f0.toString())) {
-					System.out.println("At setClassList, the id is already token!");
+
+					System.out.println("Type error");
 					exit(-1);
 				}
 				typeTable.put(n.f1.f0.toString(), null);
@@ -140,7 +143,8 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 			} else {
 				ClassExtendsDeclaration n = (ClassExtendsDeclaration) next.f0.choice;
 				if (typeTable.containsKey(n.f1.f0.toString())) {
-					System.out.println("At classdeclaration (extends), the id is already token!");
+
+					System.out.println("Type error");
 					exit(-1);
 				}
 				typeTable.put(n.f1.f0.toString(), n.f3.f0.toString());                    // TODO: 1/27/2020 check mytype
@@ -179,47 +183,52 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		classOfMethod.methodTable.put(classOfMethod.id+"."+n.f2.f0.tokenImage,methodtype);
 	}
 
-	public void DistinctParameterList(FormalParameterList n){
-		if(n==null) return;
+	public void DistinctParameterList(FormalParameterList n) {
+		if (n == null) return;
 		Vector<Node> nodes = n.f1.nodes;
-		HashSet<String> idset=new HashSet<>();
-		for (Node node : nodes){
-			if (!typeTable.containsKey(MyType.toMyType(((FormalParameterRest)node).f1.f0).toString())) {
-				System.out.println("At the FormalParameter, the type " + MyType.toMyType(((FormalParameterRest)node).f1.f0).toString() + " is not avaliable!");
+		HashSet<String> idset = new HashSet<>();
+		for (Node node : nodes) {
+			if (!typeTable.containsKey(MyType.toMyType(((FormalParameterRest) node).f1.f0).toString())) {
+
+				System.out.println("Type error");
 				exit(-1);
 			}
-			if(idset.contains(((FormalParameterRest)node).f1.f1.f0.tokenImage)){
-				System.out.println("The parameters are not distincted!");
+			if (idset.contains(((FormalParameterRest) node).f1.f1.f0.tokenImage)) {
+
+				System.out.println("Type error");
 				exit(-1);
 			}
-			idset.add(((FormalParameterRest)node).f1.f1.f0.tokenImage);
+			idset.add(((FormalParameterRest) node).f1.f1.f0.tokenImage);
 		}
-		if(!typeTable.containsKey(MyType.toMyType(n.f0.f0).toString())){
-			System.out.println("At the FormalParameter, the type " + MyType.toMyType(n.f0.f0).toString() + " is not avaliable!");
+		if (!typeTable.containsKey(MyType.toMyType(n.f0.f0).toString())) {
+
+			System.out.println("Type error");
 			exit(-1);
 		}
-		if(idset.contains(n.f0.f1.f0.tokenImage)){
-			System.out.println("The parameters are not distincted!");
+		if (idset.contains(n.f0.f1.f0.tokenImage)) {
+
+			System.out.println("Type error");
 			exit(-1);
 		}
 
 	}
 
-	public boolean isChildorTheSame(MyType child, MyType parent){
-		if(child.toString()==parent.toString())	return true;
+	public boolean isChildorTheSame(MyType child, MyType parent) {
+		if (child.toString() == parent.toString()) return true;
 		String s = null;
 		String middle = child.toString();
 		String[] str = new String[MAXCLASSNUM];
 		int i = 0;
-		do{
-			if(!typeTable.containsKey(middle))
+		do {
+			if (!typeTable.containsKey(middle))
 				break;
-			s=typeTable.get(middle);
+			s = typeTable.get(middle);
 			str[i] = s;
 			i++;
 			middle = s;
-			if(i>MAXCLASSNUM){
-				System.out.println("In isChild, it loops for too many times!");
+			if (i > MAXCLASSNUM) {
+
+				System.out.println("Type error");
 				exit(-1);
 			}
 		}while(true);
@@ -236,42 +245,45 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		String middle = child.toString();
 		String[] str = new String[MAXCLASSNUM];
 		int i = 0;
-		do{
-			if(!typeTable.containsKey(middle))
+		do {
+			if (!typeTable.containsKey(middle))
 				break;
-			s=typeTable.get(middle);
+			s = typeTable.get(middle);
 			str[i] = s;
 			i++;
 			middle = s;
-			if(i>MAXCLASSNUM){
-				System.out.println("In isChild, it loops for too many times!");
+			if (i > MAXCLASSNUM) {
+
+				System.out.println("Type error");
 				exit(-1);
 			}
-		}while(true);
-		while(i>=0){
-			if(str[i]==parent.toString())
+		} while (true);
+		while (i >= 0) {
+			if (str[i] == parent.toString())
 				return true;
 			i--;
 		}
 		return false;
 	}
 
-	public MyType checkIdentifier(Identifier n, Env env){
-		if(env.varTable.containsKey(n.f0.tokenImage)){
-			System.out.println("When checking identifier, the identifier is token");
+	public MyType checkIdentifier(Identifier n, Env env) {
+		if (env.varTable.containsKey(n.f0.tokenImage)) {
+
+			System.out.println("Type error");
 			exit(-1);
 		}
 		return env.varTable.get(n.f0.tokenImage);
 	}
 
 	public MyType checkIdentifier(Identifier n) {                    //check whether the identifier n is in the env
-		System.out.println("Checking Identifier "+n.f0.toString());
+
 		MyType _ret = null;
 		if (envStack.empty()) return null;
 		Env A = envStack.pop();
 		if (A.isMethod) {
-			if(envStack.empty()){
-				System.out.println("The Stack is empty at a method!");
+			if (envStack.empty()) {
+
+				System.out.println("Type error");
 				exit(-1);
 			}
 			Env C = envStack.peek();
@@ -289,26 +301,6 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		return _ret;
 	}
 
-//	public void addParameter(FormalParameter n) {            //add parameter to method env
-//		if (envStack.empty()) {
-//			System.out.println("When adding the Parameter, the stack is empty");
-//			exit(-1);
-//		}
-//		Env A = envStack.peek();
-//		A.add(n);
-//		//System.out.println("Try to list");
-//		//A.ListMethods();
-//	}
-
-
-//	public void addVar(Type f0, Identifier f1) {                //add varible to env
-//		if (envStack.empty()) {
-//			System.out.println("At addVar, the stack is empty");
-//			exit(-1);
-//		}
-//		Env A = envStack.peek();
-//		A.addVar(f0, f1);
-//	}
 
 	public void addVar(Type f0,Identifier f1, Env env){
 		env.addVar(f0, f1);
@@ -319,7 +311,8 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		Env parentclass = envTable.get(idM);
 		for (HashMap.Entry<String, MyType> entry : parentclass.varTable.entrySet()) {
 			if (childclass.varTable.containsKey(entry.getKey())) {
-				System.out.println("When extending the class, has the same field");
+
+				System.out.println("Type error");
 				exit(-1);        //Env.has(string(id))
 			}
 //			childclass.varTable.entrySet().add(entry);
@@ -333,7 +326,8 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		for (HashMap.Entry<String, MethodType> entry : parentclass.methodTable.entrySet()) {
 			if (childclass.methodTable.containsKey(entry.getKey())) {
 				if (!(childclass.methodTable.get(entry.getKey()).equals(entry.getValue()))) {                // TODO: 1/27/2020 methodtype == methodtype
-					System.out.println("When extending the class, method overloading!");
+
+					System.out.println("Type error");
 					exit(-1);        //Env.has(string(id))
 				}
 			} else
@@ -355,15 +349,18 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		MyType ExpressionType = n.f2.accept(this);                        // TODO: 1/27/2020 check
 		n.f3.accept(this);
 		if (IdentifierType == null) {
-			System.out.println("At an assignmentstatement the identifier is null!");
+
+			System.out.println("Type error");
 			exit(-1);
 		}
 		if (ExpressionType == null) {
-			System.out.println("At an assignmentstatement the Expression hasn't been declared!");
+
+			System.out.println("Type error");
 			exit(-1);
 		}
 		if (isChild(IdentifierType, ExpressionType)) {
-			System.out.println("At an assignmentstatement the identifiertype > expressiontype!");
+
+			System.out.println("Type error");
 			exit(-1);                            // TODO: 1/27/2020 MyType < MyType
 		}
 		_ret = IdentifierType;
@@ -404,15 +401,18 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		MyType ExpressionType2 = n.f5.accept(this);
 		n.f6.accept(this);
 		if (IdentifierType == null || IdentifierType.toString() != "int[]") {
-			System.out.println("At an arrayassignmentstatement, the identifiertype is null or is not int[]");
+
+			System.out.println("Type error");
 			exit(-1);
 		}
 		if (ExpressionType1.toString() != "int") {
-			System.out.println("At an arrayassignmentstatement, the Expressiontype1 is not int");
+
+			System.out.println("Type error");
 			exit(-1);
 		}
 		if (ExpressionType2.toString() != "int") {
-			System.out.println("At an arrayassignmentstatement, the Expressiontype2 is not int");
+
+			System.out.println("Type error");
 			exit(-1);
 		}
 		return _ret;
@@ -438,7 +438,8 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		n.f5.accept(this);
 		n.f6.accept(this);
 		if (ExpressionType.toString() != "boolean") {
-			System.out.println("At an if statement, the type of the expression is not a boolean");
+
+			System.out.println("Type error");
 			exit(-1);
 		}
 		return _ret;
@@ -459,14 +460,14 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		n.f3.accept(this);
 		n.f4.accept(this);
 		if (ExpressionType.toString() != "boolean") {
-			System.out.println("At a while statement, the expression type is not boolean!");
+
+			System.out.println("Type error");
 			exit(-1);
 		}
 		return _ret;
 	}
 
 	/**
-	 * f0 -> "System.out.println"
 	 * f1 -> "("
 	 * f2 -> Expression()
 	 * f3 -> ")"
@@ -504,36 +505,38 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 	 * f12 -> "}"
 	 */
 	public MyType visit(MethodDeclaration n) {                                //check method declaration
-		System.out.println("Checking methoddeclaration "+n.f2.f0.toString());
+
 		MyType _ret = null;
 		Env classenv = envStack.peek();
-		if(classenv.isMethod){
-			System.out.println("Define method outside the class!");
+		if (classenv.isMethod) {
+
+			System.out.println("Type error");
 			exit(-1);
 		}
-		String methodid = classenv.id+"."+n.f2.f0.toString();
+		String methodid = classenv.id + "." + n.f2.f0.toString();
 		if (envTable.containsKey(methodid)) {
-			System.out.println("At the methodDeclaration, the method has been existed!");
+
+			System.out.println("Type error");
 			exit(-1);
 		}
-		MethodType methodtype=classenv.methodTable.get(methodid);
-		Env env = new Env(methodid, true, envStack.peek().id,methodtype);        //Env(id, isMethod, classofmethod(or superclass))
-		//System.out.println(envStack.peek().id);
+		MethodType methodtype = classenv.methodTable.get(methodid);
+		Env env = new Env(methodid, true, envStack.peek().id, methodtype);        //Env(id, isMethod, classofmethod(or superclass))
+
 		envTable.put(env.id, env);
 		envStack.push(env);
-		System.out.println("try to Check MethodDeclaration nodes");
+
 		n.f0.accept(this);
 		MyType ReturnType = MyType.toMyType(n.f1);
 		n.f1.accept(this);
 		Env methodclass = envStack.peek();
 		//methodclass.methodTable.get(methodid).returnValue=new MyType(ReturnType.toString());		//Add methodTable in class of the method
 		n.f2.accept(this);
-		//System.out.println("finished checking identifier "+n.f2.f0.toString());
+
 		n.f3.accept(this);
 		//FormalParameterList ParameterList = n.f4;	need to be done?
-		//System.out.println("try to Check FormalParameterList in "+n.f2.f0.toString());
+
 		n.f4.accept(this);
-		//System.out.println(methodid+" here "+env.methodTable.get(methodid).getParameterTypeList().toString());
+
 		classenv.methodTable.put(methodid,env.methodTable.get(methodid));
 		n.f5.accept(this);
 		n.f6.accept(this);
@@ -544,24 +547,18 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		MyType ExpressionType = n.f10.accept(this);
 		n.f11.accept(this);
 		n.f12.accept(this);
-		//if (!typeTable.containsKey(n.f1.toString())) {                        // TODO: 1/27/2020 check type()
-		//	System.out.println("At the methoddeclaration, the return type is not avaliable");
-		//	exit(-1);
-		//}
-		//if(!Distinct(ParameterList))	exit(-1);
-		//if(!Distinct(DeclarationList))	exit(-1);
+
 		if (ReturnType.toString() != ExpressionType.toString()) {
-			System.out.println("At the methoddeclaration, the return type "+ExpressionType.toString()+" is not the return type declared "+ReturnType.toString());
+
+			System.out.println("Type error");
 			exit(-1);
 		}
 		Env thismethod = envStack.pop();
 		if (thismethod.id != methodid) {
-			System.out.println("At the methoddeclaration,the method is not in the stack!");
+
+			System.out.println("Type error");
 			exit(-1);
 		}
-		//MethodType methodtype = thismethod.methodTable.get(methodid);
-		//Env methodclass = envStack.peek();
-		//methodclass.methodTable.get(methodid).returnValue=ExpressionType;				//Add methodTable in class of the method
 		return _ret;
 	}
 
@@ -584,20 +581,11 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 	 * f1 -> Identifier()
 	 */
 	public MyType visit(FormalParameter n) {
-		System.out.println("Checking FormalParameter "+n.f1.f0.toString());
+
 		MyType _ret = null;
 		n.f0.accept(this);
 		MyType IdentifierType = n.f1.accept(this);
-//		if (!typeTable.containsKey(MyType.toMyType(n.f0).toString())) {
-//			System.out.println("At the FormalParameter, the type "+MyType.toMyType(n.f0).toString()+" is not avaliable!");
-//			exit(-1);
-//		}
-//		if (IdentifierType != null) {
-//			System.out.println("At the FormalParameter, identifiertype is token!");
-//			exit(-1);
-//		}
-//		//System.out.println("Now adding the Parameter");
-//		addParameter(n);
+
 		return _ret;
 	}
 
@@ -607,7 +595,7 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 	 * f2 -> ";"
 	 */
 	public MyType visit(VarDeclaration n) {
-		System.out.println("Checking VarDeclaration");
+
 		MyType _ret = null;
 		n.f0.accept(this);
 		n.f1.accept(this);
@@ -630,12 +618,13 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 	 * f5 -> "}"
 	 */
 	public MyType visit(ClassDeclaration n) {
-		System.out.println("Checking classdeclaration");
+
 		MyType _ret = null;
 		n.f0.accept(this);
 		n.f1.accept(this);
-		if(!envTable.containsKey(n.f1.f0.toString())){
-			System.out.println("In classdeclaration, class not found in the table!");
+		if (!envTable.containsKey(n.f1.f0.toString())) {
+
+			System.out.println("Type error");
 			exit(-1);
 		}
 		Env env = envTable.get(n.f1.f0.toString());
@@ -658,12 +647,13 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 	 * f7 -> "}"
 	 */
 	public MyType visit(ClassExtendsDeclaration n) {
-		System.out.println("Checking classextendsdeclaration");
+
 		MyType _ret = null;
 
 
-		if(!envTable.containsKey(n.f1.f0.toString())){
-			System.out.println("In classextendsdeclaration, class not found in the table!");
+		if (!envTable.containsKey(n.f1.f0.toString())) {
+
+			System.out.println("Type error");
 			exit(-1);
 		}
 		Env env = envTable.get(n.f1.f0.toString());
@@ -704,17 +694,19 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 	 * f17 -> "}"
 	 */
 	public MyType visit(MainClass n) {
-		System.out.println("Checking mainclass");
+
 		MyType _ret = null;
 		if (typeTable.containsKey(n.f1.f0.toString())) {
-			System.out.println("At mainclass, the id is used!");
+
+			System.out.println("Type error");
 			exit(-1);
 		}
 		typeTable.put(n.f1.f0.toString(), null);
 		n.f0.accept(this);
 		MyType Identifier = n.f1.accept(this);
 		if (Identifier != null) {
-			System.out.println("At mainclass, the id is token!");
+
+			System.out.println("Type error");
 			exit(-1);
 		}
 		Env env = new Env(n.f1.f0.toString(), false, n.f1.f0.toString());
@@ -731,7 +723,8 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		n.f10.accept(this);
 		MyType idS = n.f11.accept(this);
 		if (idS != null) {
-			System.out.println("At mainclass, the ids is token!");
+
+			System.out.println("Type error");
 			exit(-1);
 		}
 		n.f12.accept(this);
@@ -751,14 +744,14 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 	 * f2 -> <EOF>
 	 */
 	public MyType visit(Goal n) {
-		System.out.println("Checking goal");
+
 		initialize();
 		MyType _ret = null;
 		setClassList(n.f1);
 		n.f1.accept(this);
 		n.f0.accept(this);
 		n.f2.accept(this);
-		System.out.println("Type Checking finished!");
+
 		return _ret;
 	}
 
@@ -767,7 +760,7 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 	 *       | ClassExtendsDeclaration()
 	 */
 	public MyType visit(TypeDeclaration n) {
-		System.out.println("Checking typedeclaration");
+
 		MyType _ret=null;
 		n.f0.accept(this);
 		return _ret;
@@ -788,8 +781,9 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		if (t1.equals(t2) && t1.equals(new MyType("boolean"))) {
 			return (new MyType("boolean"));
 		} else {
-			System.out.println("Method: " + Thread.currentThread().getStackTrace()[1].getLineNumber() + " AndExpression error: type mismatch of rhs and lhs");
-//			System.exit(-1);
+
+			System.out.println("Type error");
+			System.exit(-1);
 		}
 		return null;
 	}
@@ -809,7 +803,8 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		if (t1.equals(t2) && t2.equals(new MyType("int"))) {
 			return new MyType("boolean");
 		} else {
-			System.out.println("Method: " + Thread.currentThread().getStackTrace()[1].getLineNumber() + "Compare Expression error: type mismatch of rhs and lhs");
+
+			System.out.println("Type error");
 			System.exit(-1);
 		}
 		return null;
@@ -830,7 +825,8 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		if (t1.equals(t2) && t2.equals(new MyType("int"))) {
 			return new MyType("int");
 		} else {
-			System.out.println("Method: " + Thread.currentThread().getStackTrace()[1].getLineNumber() + " PlusExpression error: type mismatch of rhs and lhs");
+
+			System.out.println("Type error");
 			System.exit(-1);
 		}
 		return null;
@@ -853,7 +849,8 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		if (t1.equals(t2) && t2.equals(new MyType("int"))) {
 			return new MyType("int");
 		} else {
-			System.out.println("Method: " + Thread.currentThread().getStackTrace()[1].getLineNumber() + "MinusExpression error: type mismatch of rhs and lhs");
+
+			System.out.println("Type error");
 			System.exit(-1);
 		}
 		return null;
@@ -875,7 +872,8 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		if (t1.equals(t2) && t2.equals(new MyType("int"))) {
 			return new MyType("int");
 		} else {
-			System.out.println("Method: " + Thread.currentThread().getStackTrace()[1].getLineNumber() + "TimesExpression error: type mismatch of rhs and lhs");
+
+			System.out.println("Type error");
 			System.exit(-1);
 		}
 		return null;
@@ -898,7 +896,8 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		if (t1.equals(new MyType("int[]")) && t2.equals(new MyType("int"))) {
 			return new MyType("int");
 		} else {
-			System.out.println("Method: " + Thread.currentThread().getStackTrace()[1].getLineNumber() + " error");
+
+			System.out.println("Type error");
 			System.exit(-1);
 		}
 		return new MyType("int");
@@ -920,7 +919,8 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		if (t1.equals(new MyType("int[]"))) {
 			return new MyType("int");
 		} else {
-			System.out.println("Method: " + Thread.currentThread().getStackTrace()[1].getLineNumber() + " error");
+
+			System.out.println("Type error");
 			System.exit(-1);
 		}
 		return null;
@@ -1004,24 +1004,28 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		MethodType methodType = null;
 		Env Methodenv;
 		Methodenv = envTable.get(callerType.toString());
-		if(Methodenv == null){
-			System.out.println("Method not found in MessageSend!");
+		if (Methodenv == null) {
+
+			System.out.println("Type error");
 			System.exit(-1);
 		}
 		methodType = Methodenv.getMethodType(methodId);
-		if(methodType==null){
-			System.out.println("No "+methodId+" in "+Methodenv.id);
+		if (methodType == null) {
+
+			System.out.println("Type error");
 			exit(-1);
 		}
-		 //get method type
+		//get method type
 		//now we have parameterList and required TypeList already
-		if(parameterTypeList.size()!=methodType.getParameterTypeList().size()){
-			System.out.println("Parameterlist: " + parameterTypeList.toString() + " not match the list of "+ methodId + methodType.getParameterTypeList().toString());
+		if (parameterTypeList.size() != methodType.getParameterTypeList().size()) {
+
+			System.out.println("Type error");
 			System.exit(-1);
 		}
 		for (int i = 0; i < parameterTypeList.size(); i++) {
 			if (!isChildorTheSame(parameterTypeList.get(i), methodType.getParameterTypeList().get(i))) {
-				System.out.println("Parameterlist: " + parameterTypeList.toString() + " not match the list of "+ methodId + methodType.getParameterTypeList().toString());
+
+				System.out.println("Type error");
 				System.exit(-1);
 			}
 		}
@@ -1039,12 +1043,6 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 	@Override
 	public MyType visit(TrueLiteral n) {
 		n.f0.accept(this);
-//		if (t.equals(new MyType("boolean"))) {
-//			return new MyType("boolean");
-//		} else {
-//			System.out.println("Method: " + Thread.currentThread().getStackTrace()[1 .getLineNumber()+ " error");
-////			System.exit(-1);
-//		}
 		return new MyType("boolean");
 	}
 
@@ -1056,12 +1054,6 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 	@Override
 	public MyType visit(FalseLiteral n) {
 		n.f0.accept(this);
-//		if (t.equals(new MyType("boolean"))) {
-//			return new MyType("boolean");
-//		} else {
-//			System.out.println("Method: " + Thread.currentThread().getStackTrace()[1 .getLineNumber()+ " error");
-////			System.exit(-1);
-//		}
 		return new MyType("boolean");
 	}
 
@@ -1079,7 +1071,8 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 
 			return mt;
 		} else {
-			System.out.println("Method: " + Thread.currentThread().getStackTrace()[1].getLineNumber() + " error");
+
+			System.out.println("Type error");
 			System.exit(-1);
 		}
 		return null;
@@ -1104,7 +1097,8 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		if (t1.equals(new MyType("int"))) {
 			return new MyType("int[]");
 		} else {
-			System.out.println("Method: " + Thread.currentThread().getStackTrace()[1].getLineNumber() + " error");
+
+			System.out.println("Type error");
 			System.exit(-1);
 		}
 		return null;
@@ -1142,7 +1136,8 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 		if (t1.equals(new MyType("boolean"))) {
 			return new MyType("boolean");
 		} else {
-			System.out.println("Method: " + Thread.currentThread().getStackTrace()[1].getLineNumber() + " error");
+
+			System.out.println("Type error");
 			System.exit(-1);
 		}
 		return null;
