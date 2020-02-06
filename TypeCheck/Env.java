@@ -4,6 +4,7 @@ import syntaxtree.*;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static java.lang.System.exit;
@@ -15,6 +16,31 @@ public class Env {
     String superClass;
     HashMap<String, MyType> varTable;
     HashMap<String, MethodType> methodTable;
+    LinkedHashMap<String,Integer> record;
+    LinkedHashMap<String,Integer> vtable;
+
+    public void printvTable(){
+        System.out.println("const vmt_"+id);
+        for(Map.Entry<String,Integer> entry : vtable.entrySet()){
+            System.out.println("   :"+entry.getKey()+"     test: offset:"+entry.getValue());
+        }
+    }
+
+    public void vtableDelete(String name){
+        boolean get = false;
+        for(Map.Entry<String,Integer> entry : vtable.entrySet()){
+            // TODO: 2/5/2020
+            if(get){
+                vtable.replace(entry.getKey(),entry.getValue(),entry.getValue()+1);
+            }else{
+                if(name.equals(entry.getKey())){
+                    vtable.remove(name);
+                    get = true;
+                }
+            }
+
+        }
+    }
 
     public Env(String i, boolean is, String s) {
         id = i;
@@ -28,6 +54,8 @@ public class Env {
 
         varTable = new HashMap<String, MyType>();
         methodTable = new HashMap<String, MethodType>();
+        record = new LinkedHashMap<>();
+        vtable = new LinkedHashMap<>();
         //if(methodTable.containsValue(null))
     }
 
@@ -43,6 +71,8 @@ public class Env {
         }
         varTable = new HashMap<String, MyType>();
         methodTable = new HashMap<String, MethodType>();
+        record = new LinkedHashMap<>();
+        vtable = new LinkedHashMap<>();
         //if(methodTable.containsValue(null))
         methodTable.put(id,methodtype);
     }

@@ -16,6 +16,34 @@ public class MethodType {
                 '}';
     }
 
+    public String printInVapor(){
+        return "(this " + parameterListInVapor() + ')';
+    }
+
+    public String parameterListInVapor(){
+        switch(parameterList.size()){
+            case 1:
+                for(Map.Entry<String, MyType> entry : parameterList.entrySet()){
+                    return entry.getKey();
+                }
+            case 0:
+                return "";
+            default:
+                String ret = "";
+                int p = 0;
+                for(Map.Entry<String, MyType> entry : parameterList.entrySet()){
+                    if(p==parameterList.size()-1){
+                        ret = ret+entry.getKey();
+                    }
+                    else{
+                        ret = ret + entry.getKey()+" ";
+                    }
+                    p++;
+                }
+                return ret;
+        }
+    }
+
     public MethodType(MyType returntype) {
         parameterList = new LinkedHashMap<>();
         returnValue = returntype;
