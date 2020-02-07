@@ -9,10 +9,18 @@ import static java.lang.System.exit;
 
 
 public class transVisitor extends GJNoArguDepthFirst<MyType> {
-
+    public HashMap<String,HashMap<Integer,String>> listTable=new HashMap<>();
+    public HashMap<String, Var> varTable=new HashMap<>();
     public HashMap<String,Env>  envTable=new HashMap<>();
+    public HashMap<String,Integer> classSize = new HashMap<>();
     public Stack<Env> envStack = new Stack<Env>();
     public HashMap<String, String> typeTable = new HashMap<>();
+    public int iflabeloffset=0;
+    public int whilelabeloffset=0;
+    public int intvaroffset=0;
+    public int booleanvaroffset=0;
+    public int arrayvaroffset=0;
+    public int classvaroffset=0;
     public int MAXCLASSNUM = 1024;
     public static String ROOT = "root is absolutely no duplication";
     public void initialize() {
@@ -52,6 +60,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
             setMethod((MethodDeclaration)node, vtableoffset, env);
             vtableoffset++;
         }
+        classSize.put(n.f1.f0.tokenImage,recordoffset);
     }
     public void setupClassExtendsTable(ClassExtendsDeclaration n){
         Vector<Node>  vdnodes = n.f5.nodes;
@@ -73,6 +82,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
             vtableoffset=setExtendsMethod((MethodDeclaration)node, vtableoffset, env);
 
         }
+        classSize.put(n.f1.f0.tokenImage,recordoffset);
     }
     public void setField(VarDeclaration n,int offset,Env env){
         String name = n.f1.f0.tokenImage;
@@ -400,6 +410,11 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
         method = String.valueOf(result);
         return method;
     }
+    public void printAssignmentStatement(String id,String vid){
+        Var var = varTable.get(id);
+        System.out.println(var.jid+"=HeapAllocZ(4)");
+        System.out.print(var.jid+"=["+vid+"]");             // TODO: 2/7/2020 double check
+    }
     /**
      * f0 -> MainClass()
      * f1 -> ( TypeDeclaration() )*
@@ -514,10 +529,130 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
         n.f10.accept(this);
         n.f11.accept(this);
         n.f12.accept(this);
+        System.out.println("ret ");
         envStack.pop();
         System.out.println();
         return _ret;
     }
-
-
+    /**
+     * f0 -> Identifier()
+     * f1 -> "="
+     * f2 -> Expression()
+     * f3 -> ";"
+     */
+    public MyType visit(AssignmentStatement n) {
+        MyType _ret=null;
+        Env env=envStack.peek();
+        String id=n.f0.f0.tokenImage;
+        MyType mt=n.f2.accept(this);
+        String newvid=mt.toString()+Var.intoffset++;
+        Var var=new Var(id,newvid,mt.f0,mt.value,env.id);
+        varTable.put(id,var);
+        printAssignmentStatement(id,mt.vid);
+        _ret=new MyType(newvid,mt.f0,mt.value);
+        return _ret;
+    }
+    /**
+     * f0 -> Identifier()
+     * f1 -> "["
+     * f2 -> Expression()
+     * f3 -> "]"
+     * f4 -> "="
+     * f5 -> Expression()
+     * f6 -> ";"
+     */
+    public MyType visit(ArrayAssignmentStatement n) {
+        MyType _ret=null;
+        MyType e1=n.f2.accept(this);
+        MyType e2=n.f5.accept(this);
+        String listname = listTable.get(n.f0.f0.tokenImage).get(e1.value);
+        System.out.println(listname + "="+e2.vid);
+        return _ret;
+    }
+    /**
+     * f0 -> "if"
+     * f1 -> "("
+     * f2 -> Expression()
+     * f3 -> ")"
+     * f4 -> Statement()
+     * f5 -> "else"
+     * f6 -> Statement()
+     */
+    public MyType visit(IfStatement n) {
+        MyType _ret=null;
+        MyType e=n.f2.accept(this);
+        String labels1="truebranch"+iflabeloffset;
+        String labels2="falsebranch"+iflabeloffset++;
+        System.out.println("if "+e.vid+" goto :"+labels1);
+        n.f6.accept(this);
+        System.out.println("goto :"+labels2);
+        System.out.println(labels1+":");
+        n.f4.accept(this);
+        System.out.println(labels2+":");
+        return _ret;
+    }
+    /**
+     * f0 -> "while"
+     * f1 -> "("
+     * f2 -> Expression()
+     * f3 -> ")"
+     * f4 -> Statement()
+     */
+    public MyType visit(WhileStatement n) {
+        MyType _ret=null;
+        String labeltrue="whiletrue"+whilelabeloffset;
+        String labelfalse="whilefalse"+whilelabeloffset++;
+        System.out.println(labeltrue+":");
+        MyType e=n.f2.accept(this);
+        System.out.println("if0 "+e.vid+" goto :"+labelfalse);
+        n.f4.accept(this);
+        System.out.println("goto :"+labeltrue);
+        System.out.println(labelfalse+":");
+        return _ret;
+    }
+    /**
+     * f0 -> "System.out.println"
+     * f1 -> "("
+     * f2 -> Expression()
+     * f3 -> ")"
+     * f4 -> ";"
+     */
+    public MyType visit(PrintStatement n) {
+        MyType _ret=null;
+        MyType e = n.f2.accept(this);
+        System.out.println("PrintInt("+e.vid+")");
+        return _ret;
+    }
+    /**
+     * f0 -> Type()
+     * f1 -> Identifier()
+     * f2 -> ";"
+     */
+    public MyType visit(VarDeclaration n) {
+        MyType _ret=null;
+        MyType type = n.f0.accept(this);
+        if(type.f0.tokenImage=="int"){
+            String newvid="intvar"+intvaroffset++;
+            Var var = new Var(n.f1.f0.tokenImage,newvid,type.f0,0,envStack.peek().id);
+            varTable.put(n.f1.f0.tokenImage,var);
+            System.out.println(newvid+"=HeapAllocZ(4)");
+        }else if(type.f0.tokenImage=="boolean"){
+            String newvid="booleanvar"+booleanvaroffset++;
+            Var var = new Var(n.f1.f0.tokenImage,newvid,type.f0,0,envStack.peek().id);
+            varTable.put(n.f1.f0.tokenImage,var);
+            System.out.println(newvid+"=HeapAllocZ(4)");
+        }else if(type.f0.tokenImage=="int[]"){
+            String newvid = "arrayvar"+arrayvaroffset++;
+            Var var = new Var(n.f1.f0.tokenImage,newvid,type.f0,0,envStack.peek().id);
+            varTable.put(n.f1.f0.tokenImage,var);
+            HashMap<Integer,String> arraylist = new HashMap<Integer,String>();
+            listTable.put(newvid,arraylist);
+        }else{
+            String newvid = "classvar"+classvaroffset++;
+            Var var = new Var(n.f1.f0.tokenImage,newvid,type.f0,0,envStack.peek().id);
+            varTable.put(n.f1.f0.tokenImage,var);
+            System.out.println(newvid+"=HeapAllocZ("+(classSize.get(n.f1.f0.tokenImage)*4+4)+")");
+        }
+        return _ret;
+    }
 }

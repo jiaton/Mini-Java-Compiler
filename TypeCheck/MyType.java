@@ -12,9 +12,15 @@ import static java.lang.System.exit;
 
 class MyType implements Node {
 
-
+    String vid;
+    int value;
     NodeToken f0;
 
+    public MyType(String newvid,NodeToken mtype,int mvalue){
+        vid = newvid;
+        value = mvalue;
+        f0 = mtype;
+    }
     public MyType(NodeToken nodeToken) {
         this.f0 = nodeToken;
     }

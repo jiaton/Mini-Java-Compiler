@@ -166,7 +166,6 @@ public class MyVisitor extends GJNoArguDepthFirst<MyType> {
 				SetMethodList(n.f6, env);
 				fieldExtends(n.f1.f0.toString(), n.f3.f0.toString());                    //VarExtends(id, idM)
 				MethodExtends(n.f1.f0.toString(), n.f3.f0.toString());                //MethodExtends(n.f1.f0.toString(), n.f3.f0.toString());                //MethodExtends(id, idM)
-
 			}
 		}
 	}
