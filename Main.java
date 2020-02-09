@@ -13,6 +13,7 @@ public class Main {
 			Node goal = new MiniJavaParser(in).Goal();
 			System.out.println("visit starting");
 			goal.accept(new MyVisitor());
+			goal.accept(new transVisitor());
 		} catch (ParseException | FileNotFoundException e) {
 			e.printStackTrace();
 		}
