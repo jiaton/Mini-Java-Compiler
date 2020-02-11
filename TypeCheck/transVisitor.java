@@ -25,8 +25,10 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	public int arrayvaroffset = 0;
 	public int classvaroffset = 0;
 	public int allocationNullOffset = 1;
+	public int arrayLookupOffset = 1;
 	public int MAXCLASSNUM = 1024;
 	public static String ROOT = "root is absolutely no duplication";
+	public Printer printer = new Printer();
 
 	public void initialize() {
 		typeTable.put("int", null);
@@ -164,20 +166,20 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 
 	public MyType checkIdentifier(Identifier n, Env env) {
 		if (env.varTable.containsKey(n.f0.tokenImage)) {
-			System.out.println("When checking identifier, the identifier is token");
+			printer.println("When checking identifier, the identifier is token");
 			exit(-1);
 		}
 		return env.varTable.get(n.f0.tokenImage);
 	}
 
 	public MyType checkIdentifier(Identifier n) {                    //check whether the identifier n is in the env
-//		System.out.println("Checking Identifier " + n.f0.toString());
+//		printer.println();("Checking Identifier " + n.f0.toString());
 		MyType _ret = null;
 		if (envStack.empty()) return null;
 		Env A = envStack.pop();
 		if (A.isMethod) {
 			if (envStack.empty()) {
-				System.out.println("The Stack is empty at a method!");
+				printer.println("The Stack is empty at a method!");
 				exit(-1);
 			}
 			Env C = envStack.peek();
@@ -211,21 +213,21 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		HashSet<String> idset = new HashSet<>();
 		for (Node node : nodes) {
 			if (!typeTable.containsKey(MyType.toMyType(((FormalParameterRest) node).f1.f0).toString())) {
-				System.out.println("At the FormalParameter, the type " + MyType.toMyType(((FormalParameterRest) node).f1.f0).toString() + " is not avaliable!");
+				printer.println("At the FormalParameter, the type " + MyType.toMyType(((FormalParameterRest) node).f1.f0).toString() + " is not avaliable!");
 				exit(-1);
 			}
 			if (idset.contains(((FormalParameterRest) node).f1.f1.f0.tokenImage)) {
-				System.out.println("The parameters are not distincted!");
+				printer.println("The parameters are not distincted!");
 				exit(-1);
 			}
 			idset.add(((FormalParameterRest) node).f1.f1.f0.tokenImage);
 		}
 		if (!typeTable.containsKey(MyType.toMyType(n.f0.f0).toString())) {
-			System.out.println("At the FormalParameter, the type " + MyType.toMyType(n.f0.f0).toString() + " is not avaliable!");
+			printer.println("At the FormalParameter, the type " + MyType.toMyType(n.f0.f0).toString() + " is not avaliable!");
 			exit(-1);
 		}
 		if (idset.contains(n.f0.f1.f0.tokenImage)) {
-			System.out.println("The parameters are not distincted!");
+			printer.println("The parameters are not distincted!");
 			exit(-1);
 		}
 
@@ -249,7 +251,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		Env parentclass = envTable.get(idM);
 		for (HashMap.Entry<String, MyType> entry : parentclass.varTable.entrySet()) {
 			if (childclass.varTable.containsKey(entry.getKey())) {
-				System.out.println("When extending the class, has the same field");
+				printer.println("When extending the class, has the same field");
 				exit(-1);        //Env.has(string(id))
 			}
 //			childclass.varTable.entrySet().add(entry);
@@ -263,7 +265,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		for (HashMap.Entry<String, MethodType> entry : parentclass.methodTable.entrySet()) {
 			if (childclass.methodTable.containsKey(entry.getKey())) {
 				if (!(childclass.methodTable.get(entry.getKey()).equals(entry.getValue()))) {                // TODO: 1/27/2020 methodtype == methodtype
-					System.out.println("When extending the class, method overloading!");
+					printer.println("When extending the class, method overloading!");
 					exit(-1);        //Env.has(string(id))
 				}
 			} else
@@ -288,12 +290,12 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	 */
 	public void SetField(VarDeclaration n, Env classOfFields) {
 //        if (!typeTable.containsKey(MyType.toMyType(n.f0).toString())) {
-//            System.out.println("At the VarDeclaration, the type is not avaliable!");
+//            printer.println();("At the VarDeclaration, the type is not avaliable!");
 //            exit(-1);
 //        }
 		MyType IdentifierType = checkIdentifier(n.f1, classOfFields);
 		if (IdentifierType != null) {
-			System.out.println("At the VarDeclaration, the id is token!");
+			printer.println("At the VarDeclaration, the id is token!");
 			exit(-1);
 		}
 		addVar(n.f0, n.f1, classOfFields);
@@ -306,7 +308,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 			if (next.f0.which == 0) {
 				ClassDeclaration n = (ClassDeclaration) next.f0.choice;
 				if (typeTable.containsKey(n.f1.f0.toString())) {
-					System.out.println("At setClassList, the id is already token:" + n.f1.f0.toString());
+					printer.println("At setClassList, the id is already token:" + n.f1.f0.toString());
 					exit(-1);
 				}
 				typeTable.put(n.f1.f0.toString(), null);
@@ -315,7 +317,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 			} else {
 				ClassExtendsDeclaration n = (ClassExtendsDeclaration) next.f0.choice;
 				if (typeTable.containsKey(n.f1.f0.toString())) {
-					System.out.println("At classdeclaration (extends), the id is already token!");
+					printer.println("At classdeclaration (extends), the id is already token!");
 					exit(-1);
 				}
 				typeTable.put(n.f1.f0.toString(), n.f3.f0.toString());                    // TODO: 1/27/2020 check mytype
@@ -398,7 +400,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		if (next.f0.which == 0) {
 			ClassDeclaration n = (ClassDeclaration) next.f0.choice;
 			if (typeTable.containsKey(n.f1.f0.toString())) {
-				System.out.println("At setClassList, the id is already token!");
+				printer.println("At setClassList, the id is already token!");
 				exit(-1);
 			}
 			typeTable.put(n.f1.f0.toString(), null);
@@ -407,7 +409,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		} else {
 			ClassExtendsDeclaration n = (ClassExtendsDeclaration) next.f0.choice;
 			if (typeTable.containsKey(n.f1.f0.toString())) {
-				System.out.println("At classdeclaration (extends), the id is already token!");
+				printer.println("At classdeclaration (extends), the id is already token!");
 				exit(-1);
 			}
 			typeTable.put(n.f1.f0.toString(), n.f3.f0.toString());                    // TODO: 1/27/2020 check mytype
@@ -444,8 +446,8 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 
 	public void printAssignmentStatement(String id, String vid) {
 		Var var = varTable.get(id);
-		System.out.println(var.jid + "=HeapAllocZ(4)");
-		System.out.print(var.jid + "=[" + vid + "]");             // TODO: 2/7/2020 double check
+//		printer.println(var.jid + "=HeapAllocZ(4)");
+		printer.println(var.jid + " = " + vid);             // TODO: 2/7/2020 double check
 	}
 
 	/**
@@ -513,12 +515,14 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		Env envMainMethod = new Env("main", true, className, new MethodType(new MyType("void"))); // TODO: 2/8/2020 Don't care about the method type for now
 		envTable.put(envMainMethod.id, envMainMethod);
 		envStack.push(envMainMethod);
+		printer.println("\nfunc Main()");
 		n.f14.accept(this);
 		n.f15.accept(this);
 		n.f16.accept(this);
 		envStack.pop();
 		n.f17.accept(this);
 		envStack.pop();
+		printer.println("ret");
 		return null;
 	}
 
@@ -601,12 +605,13 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		String methodid = classenv.id + "." + n.f2.f0.toString();
 		MethodType methodtype = classenv.methodTable.get(methodid);
 		Env env = new Env(methodid, true, envStack.peek().id, methodtype);        //Env(id, isMethod, classofmethod(or superclass))
-		//System.out.println(envStack.peek().id);
+		//printer.println();(envStack.peek().id);
 		envTable.put(env.id, env);
 		envStack.push(env);
-		System.out.print("func ");
-		System.out.print(env.id);
-		System.out.println(" " + env.methodTable.get(env.id).printInVapor());
+		printer.addIndentation();
+		printer.print("\nfunc ");
+		printer.print(env.id);
+		printer.println(" " + env.methodTable.get(env.id).printInVapor());
 		n.f0.accept(this);
 		n.f1.accept(this);
 		n.f2.accept(this);
@@ -620,9 +625,10 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		n.f10.accept(this);
 		n.f11.accept(this);
 		n.f12.accept(this);
-		System.out.println("ret ");
+		printer.println("ret ");
 		envStack.pop();
-		System.out.println();
+		printer.removeIndentation();
+		printer.println();
 		return _ret;
 	}
 
@@ -659,7 +665,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		MyType e1 = n.f2.accept(this);
 		MyType e2 = n.f5.accept(this);
 		String listname = listTable.get(n.f0.f0.tokenImage).get(e1.value);
-		System.out.println(listname + "=" + e2.vid);
+		printer.println(listname + "=" + e2.vid);
 		return _ret;
 	}
 
@@ -676,13 +682,17 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		MyType _ret = null;
 		MyType e = n.f2.accept(this);
 		String labels1 = "truebranch" + iflabeloffset;
-		String labels2 = "falsebranch" + iflabeloffset++;
-		System.out.println("if " + e.vid + " goto :" + labels1);
+		String labels2 = "end_if" + iflabeloffset++;
+		printer.println("if " + e.vid + " goto :" + labels1);
+		printer.addIndentation();
 		n.f6.accept(this);
-		System.out.println("goto :" + labels2);
-		System.out.println(labels1 + ":");
+		printer.println("goto :" + labels2);
+		printer.removeIndentation();
+		printer.println(labels1 + ":");
+		printer.addIndentation();
 		n.f4.accept(this);
-		System.out.println(labels2 + ":");
+		printer.removeIndentation();
+		printer.println(labels2 + ":");
 		return _ret;
 	}
 
@@ -697,17 +707,19 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		MyType _ret = null;
 		String labeltrue = "whiletrue" + whilelabeloffset;
 		String labelfalse = "whilefalse" + whilelabeloffset++;
-		System.out.println(labeltrue + ":");
+		printer.println(labeltrue + ":");
+		printer.addIndentation();
 		MyType e = n.f2.accept(this);
-		System.out.println("if0 " + e.vid + " goto :" + labelfalse);
+		printer.println("if0 " + e.vid + " goto :" + labelfalse);
+		printer.removeIndentation();
 		n.f4.accept(this);
-		System.out.println("goto :" + labeltrue);
-		System.out.println(labelfalse + ":");
+		printer.println("goto :" + labeltrue);
+		printer.println(labelfalse + ":");
 		return _ret;
 	}
 
 	/**
-	 * f0 -> "System.out.println"
+	 * f0 -> "printer.println();"
 	 * f1 -> "("
 	 * f2 -> Expression()
 	 * f3 -> ")"
@@ -716,7 +728,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	public MyType visit(PrintStatement n) {
 		MyType _ret = null;
 		MyType e = n.f2.accept(this);
-		System.out.println("PrintIntS(" + e.vid + ")");
+		printer.println("PrintIntS(" + e.vid + ")");
 		return _ret;
 	}
 
@@ -728,28 +740,6 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	public MyType visit(VarDeclaration n) {
 		MyType _ret = null;
 		MyType type = n.f0.accept(this);
-		if (type.f0.tokenImage == "int") {
-			String newvid = "intvar" + intvaroffset++;
-			Var var = new Var(n.f1.f0.tokenImage, newvid, type.f0, 0, envStack.peek().id);
-			varTable.put(n.f1.f0.tokenImage, var);
-			System.out.println(newvid + "=HeapAllocZ(4)");
-		} else if (type.f0.tokenImage == "boolean") {
-			String newvid = "booleanvar" + booleanvaroffset++;
-			Var var = new Var(n.f1.f0.tokenImage, newvid, type.f0, 0, envStack.peek().id);
-			varTable.put(n.f1.f0.tokenImage, var);
-			System.out.println(newvid + "=HeapAllocZ(4)");
-		} else if (type.f0.tokenImage == "int[]") {
-			String newvid = "arrayvar" + arrayvaroffset++;
-			Var var = new Var(n.f1.f0.tokenImage, newvid, type.f0, 0, envStack.peek().id);
-			varTable.put(n.f1.f0.tokenImage, var);
-			HashMap<Integer, String> arraylist = new HashMap<Integer, String>();
-			listTable.put(newvid, arraylist);
-		} else {
-			String newvid = "classvar" + classvaroffset++;
-			Var var = new Var(n.f1.f0.tokenImage, newvid, type.f0, 0, envStack.peek().id);
-			varTable.put(n.f1.f0.tokenImage, var);
-			System.out.println(newvid + "=HeapAllocZ(" + (classSize.get(n.f1.f0.tokenImage) * 4 + 4) + ")");
-		}
 		return _ret;
 	}
 
@@ -781,11 +771,11 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		int methodOffset = envTable.get(className).vtable.get(methodId);
 		String storedVaporVar = varTable.get(className).vid;
 		String newClassVar = "classvar." + classvaroffset++;
-		System.out.println(newClassVar + " = " +
+		printer.println(newClassVar + " = " +
 				"[" +
 				storedVaporVar +
 				"]");
-		System.out.println(newClassVar + " = " +
+		printer.println(newClassVar + " = " +
 				"[" +
 				newClassVar +
 				"+" +
@@ -814,7 +804,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 			parameterString.append(parameter.value);
 		}
 
-		System.out.println(returnValue + " = " +
+		printer.println(returnValue + " = " +
 				"call " +
 				newClassVar +
 				"(" +
@@ -878,8 +868,10 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
      */
     @Override
     public MyType visit(TrueLiteral n) {
-        n.f0.accept(this);
-        return new MyType("boolean");
+		n.f0.accept(this);
+		MyType _ret = new MyType("boolean");
+		_ret.value = 1;
+		return _ret;
     }
 
     /**
@@ -905,8 +897,24 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
      */
     @Override
     public MyType visit(ArrayAllocationExpression n) {
-        // TODO: 2/8/2020 ArrayAllocation
-        return super.visit(n);
+		n.f0.accept(this);
+		n.f1.accept(this);
+		n.f2.accept(this);
+		MyType t = n.f3.accept(this);
+		n.f4.accept(this);
+		int size = t.value;
+		String vaporName = "arrayvar." + arrayvaroffset++;
+		printer.println(vaporName + " = " +
+				"HeapAllocZ(" +
+				size * 4 + 4 +
+				")");
+		printer.println("[" +
+				vaporName +
+				"] = " +
+				size); //The base address' value will store the array size
+		MyType _ret = new MyType("int[]");
+		_ret.vid = vaporName;
+		return _ret;
     }
 
     /**
@@ -946,8 +954,10 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
      */
     @Override
     public MyType visit(FalseLiteral n) {
-        n.f0.accept(this);
-        return new MyType("false");
+		n.f0.accept(this);
+		MyType _ret = new MyType("boolean");
+		_ret.value = 0;
+		return _ret;
     }
 
     @Override
@@ -977,18 +987,18 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		String className = n.f1.f0.tokenImage;
 		String vaporName = "classvar." + classvaroffset++;
 		int sizeWithTableHead = classSize.get(className) + 4;
-		System.out.println(vaporName
+		printer.println(vaporName
 				+ " = HeapAllocZ(" +
 				+sizeWithTableHead +
 				")");
 		Var var = new Var(className, vaporName, null, 0, envStack.peek().id);
 		varTable.put(className, var);
-		System.out.println("[" +
+		printer.println("[" +
 				vaporName +
 				"] = :vmt_" +
 				className);
 		String allocNullLabel = "null" + allocationNullOffset++;
-		System.out.println("if " +
+		printer.println("if " +
 				vaporName +
 				" goto " +
 				":" +
@@ -1078,7 +1088,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
         MyType t2 = n.f2.accept(this);
         MyType _ret = new MyType("boolean");
         String tmpVar = "booleanvar."+booleanvaroffset++;
-        System.out.println(tmpVar+" = "+ "And( "+t1.vid+" "+ t2.vid+")");
+		printer.println(tmpVar + " = " + "And( " + t1.vid+" "+ t2.vid+")");
         return _ret;
     }
 
@@ -1099,7 +1109,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		MyType t2 = n.f2.accept(this);
 
 		String tmpVar = "booleanvar." + booleanvaroffset++;
-		System.out.println(tmpVar+" = LtS(" + t1.vid +
+		printer.println(tmpVar + " = LtS(" + t1.vid +
 				" " + t2.vid +
 				")");
 
@@ -1123,12 +1133,12 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
         MyType t2 = n.f2.accept(this);
         String tmpVar = "intvar."+ intvaroffset++;
         _ret = new MyType("int");
-        _ret.vid=tmpVar;
-        System.out.println(tmpVar + " = Add(" +
-                t1.vid +
-                " " +
-                t2.vid +
-                ")");
+        _ret.vid = tmpVar;
+		printer.println(tmpVar + " = Add(" +
+				t1.vid +
+				" " +
+				t2.vid +
+				")");
         return _ret;
     }
 
@@ -1147,12 +1157,12 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
         MyType t2 = n.f2.accept(this);
         String tmpVar = "intvar."+ intvaroffset++;
         _ret = new MyType("int");
-        _ret.vid=tmpVar;
-        System.out.println(tmpVar + " = Sub(" +
-                t1.vid +
-                " " +
-                t2.vid +
-                ")");
+        _ret.vid = tmpVar;
+		printer.println(tmpVar + " = Sub(" +
+				t1.vid +
+				" " +
+				t2.vid +
+				")");
         return _ret;
     }
 
@@ -1171,12 +1181,12 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
         MyType t2 = n.f2.accept(this);
         String tmpVar = "intvar."+ intvaroffset++;
         _ret = new MyType("int");
-        _ret.vid=tmpVar;
-        System.out.println(tmpVar + " = Mul(" +
-                t1.vid +
-                " " +
-                t2.vid +
-                ")");
+        _ret.vid = tmpVar;
+		printer.println(tmpVar + " = Mul(" +
+				t1.vid +
+				" " +
+				t2.vid +
+				")");
         return _ret;
     }
 
@@ -1190,27 +1200,67 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
      */
     @Override
     public MyType visit(ArrayLookup n) {
-        // TODO: 2/8/2020 array lookup !!!
-        MyType _ret=null;
-        n.f0.accept(this);
-        n.f1.accept(this);
-        n.f2.accept(this);
-        n.f3.accept(this);
-        _ret = new MyType("int");
-        return _ret;
-    }
+		MyType _ret = null;
+		MyType t1 = n.f0.accept(this);
+		n.f1.accept(this);
+		MyType t2 = n.f2.accept(this);
+		int index = t2.value;
+		n.f3.accept(this);
+		String baseAddressOfArray = t1.vid;
+		String size = "intvar." + intvaroffset++;
+		printer.println(size + " = " + "[" +
+				baseAddressOfArray +
+				"]");
+		printer.println("ok = LtS(" +
+				index +
+				" " +
+				size +
+				")");
+		printer.println("if ok goto :" + arrayLookupOffset);
+		printer.println("Error(\"Array index out of bounds\")");
+		printer.println(arrayLookupOffset++ + ": ok = LtS(" +
+				"-1" +
+				" " +
+				index +
+				")");
+		printer.addIndentation();
+		printer.println("if ok goto :" + arrayLookupOffset);
+		printer.println("Error(\"Array index out of bounds\")");
+		printer.removeIndentation();
+		printer.println(arrayLookupOffset++ + ": " + "o = MulS(" +
+				index +
+				" " +
+				"4");
+		printer.addIndentation();
+		printer.println("d = Add(" +
+				baseAddressOfArray +
+				" o"
+		);
+		printer.println("r = [d+4]");
+		printer.removeIndentation();
 
-    /**
-     * f0 -> PrimaryExpression()
-     * f1 -> "."
-     * f2 -> "length"
-     *
-     * @param n
-     */
-    @Override
-    public MyType visit(ArrayLength n) {
-        // TODO: 2/8/2020 arraylentgh!!!!
-        return new MyType("int");
-    }
+		_ret = new MyType("int");
 
+		return _ret;
+	}
+
+	/**
+	 * f0 -> PrimaryExpression()
+	 * f1 -> "."
+	 * f2 -> "length"
+	 *
+	 * @param n
+	 */
+	@Override
+	public MyType visit(ArrayLength n) {
+		MyType _ret = null;
+		MyType t = n.f0.accept(this);
+		n.f1.accept(this);
+		n.f2.accept(this);
+		String baseAddress = t.vid;
+		printer.println("intvar." + intvaroffset++ + " = [" +
+				baseAddress +
+				"]");
+		return _ret;
+	}
 }
