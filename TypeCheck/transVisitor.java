@@ -173,7 +173,9 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		return env.varTable.get(n.f0.tokenImage);
 	}
 
-	public MyType checkIdentifier(Identifier n) {                    //check whether the identifier n is in the env
+	public MyType checkIdentifier(Identifier n) {
+
+		//check whether the identifier n is in the env
 //		printer.println();("Checking Identifier " + n.f0.toString());
 		MyType _ret = null;
 		if (envStack.empty()) return null;
@@ -448,7 +450,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	public void printAssignmentStatement(String id, String vid) {
 		Var var = varTable.get(id);
 //		printer.println(var.jid + "=HeapAllocZ(4)");
-		printer.println(var.jid + " = " + vid);             // TODO: 2/7/2020 double check
+		printer.println(var.vid + " = " + vid);             // TODO: 2/12/2020 check v or j
 	}
 
 	/**
@@ -634,6 +636,37 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	}
 
 	/**
+	 * f0 -> Type()
+	 * f1 -> Identifier()
+	 */
+	public MyType visit(FormalParameter n) {
+		MyType _ret=null;
+		n.f0.accept(this);
+		n.f1.accept(this);
+		MyType type = MyType.toMyType(n.f0);
+		String newvid;
+		switch(n.f0.f0.which){
+			case 0:
+				newvid = "array"+arrayvaroffset++;    // TODO: 2/12/2020 check other places
+				break;
+			case 1:
+				newvid = "boolean"+booleanvaroffset++;
+				break;
+			case 2:
+				newvid = "int"+intvaroffset++;
+				break;
+			case 3:
+				newvid = "class"+classvaroffset++;
+				break;
+			default:
+				newvid = "defaultatVarDeclaration";
+		}
+		Var var = new Var(n.f1.f0.tokenImage, newvid, type.f0, 0, envStack.peek().id);
+		varTable.put(n.f1.f0.tokenImage,var);
+		return _ret;
+	}
+
+	/**
 	 * f0 -> Identifier()
 	 * f1 -> "="
 	 * f2 -> Expression()
@@ -644,11 +677,13 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		Env env = envStack.peek();
 		String id = n.f0.f0.tokenImage;
 		MyType mt = n.f2.accept(this);
-		String newvid = mt.toString() + Var.intoffset++;
-		Var var = new Var(id, newvid, mt.f0, mt.value, env.id);
-		varTable.put(id, var);
+//		String newvid = mt.toString() + Var.intoffset++;
+//		Var var = new Var(id, newvid, mt.f0, mt.value, env.id);
+//		varTable.put(id, var);
+		Var var = varTable.get(id);
+		var.value = mt.value;
 		printAssignmentStatement(id, mt.vid);
-		_ret = new MyType(newvid, mt.f0, mt.value);
+		_ret = new MyType(var.vid, mt.f0, mt.value);
 		return _ret;
 	}
 
@@ -772,7 +807,27 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	 */
 	public MyType visit(VarDeclaration n) {
 		MyType _ret = null;
-		MyType type = n.f0.accept(this);
+		MyType type = MyType.toMyType(n.f0);
+		n.f0.accept(this);
+		String newvid;
+		switch(n.f0.f0.which){
+			case 0:
+				newvid = "array"+arrayvaroffset++;    // TODO: 2/12/2020 check other places
+				break;
+			case 1:
+				newvid = "boolean"+booleanvaroffset++;
+				break;
+			case 2:
+				newvid = "int"+intvaroffset++;
+				break;
+			case 3:
+				newvid = "class"+classvaroffset++;
+				break;
+			default:
+				newvid = "defaultatVarDeclaration";
+		}
+		Var var = new Var(n.f1.f0.tokenImage, newvid, type.f0, 0, envStack.peek().id);
+		varTable.put(n.f1.f0.tokenImage,var);
 		return _ret;
 	}
 
@@ -1073,6 +1128,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	 */
 	@Override
 	public MyType visit(Type n) {
+
 		return n.f0.accept(this);
 	}
 
