@@ -15,14 +15,28 @@ class MyType implements Node {
     String vid;
     int value;
     NodeToken f0;
+    String identifierName;
 
-    public MyType(String newvid,NodeToken mtype,int mvalue){
+    public String getIdentifierName() {
+        return identifierName;
+    }
+
+    public void setIdentifierName(String identifierName) {
+        this.identifierName = identifierName;
+    }
+
+    public MyType(String newvid, NodeToken mtype, int mvalue) {
         vid = newvid;
         value = mvalue;
         f0 = mtype;
     }
+
     public MyType(NodeToken nodeToken) {
         this.f0 = nodeToken;
+    }
+
+    public MyType() {
+
     }
 
     //    construct with type name
@@ -73,6 +87,9 @@ class MyType implements Node {
 
     @Override
     public String toString() {
+        if (f0 == null) {
+            return "";
+        }
         return f0.toString();
     }
 

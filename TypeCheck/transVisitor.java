@@ -4,6 +4,7 @@ import syntaxtree.*;
 import visitor.GJNoArguDepthFirst;
 
 import java.awt.*;
+import java.awt.dnd.DropTarget;
 import java.util.*;
 
 import static java.lang.System.exit;
@@ -652,6 +653,38 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	}
 
 	/**
+	 * f0 -> Block()
+	 * | AssignmentStatement()
+	 * | ArrayAssignmentStatement()
+	 * | IfStatement()
+	 * | WhileStatement()
+	 * | PrintStatement()
+	 *
+	 * @param n
+	 */
+	@Override
+	public MyType visit(Statement n) {
+		return n.f0.accept(this);
+	}
+
+	@Override
+	public MyType visit(NodeListOptional n) {
+		if (n.present()) {
+			MyType _ret = null;
+			int _count = 0;
+			for (Enumeration<Node> e = n.elements(); e.hasMoreElements(); ) {
+				MyType tmp = e.nextElement().accept(this);
+				if (tmp != null) {
+					_ret = tmp;
+				}
+				_count++;
+			}
+			return _ret;
+		} else
+			return null;
+	}
+
+	/**
 	 * f0 -> Identifier()
 	 * f1 -> "["
 	 * f2 -> Expression()
@@ -765,7 +798,12 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		n.f3.accept(this);
 		n.f4.accept(this);
 		n.f5.accept(this);
-		String className = classIdentifier.toString(); //caller
+		String className; //the caller Class
+		if (classIdentifier.getIdentifierName() != null) { //Class name
+			className = varTable.get(classIdentifier.getIdentifierName()).type.toString();
+		} else { //identifier name
+			className = classIdentifier.toString();
+		}
 		String methodName = n.f2.f0.tokenImage;
 		String methodId = className + "." + methodName;
 		int methodOffset = envTable.get(className).vtable.get(methodId);
@@ -958,14 +996,15 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		MyType _ret = new MyType("boolean");
 		_ret.value = 0;
 		return _ret;
-    }
+	}
 
-    @Override
+	@Override
 	/*return the Identifier's type*/
+	// TODO: 2020/2/11 return identifier itself (any problem?)
 	public MyType visit(Identifier n) {
 		n.f0.accept(this);
-		MyType t = new MyType(n.f0.tokenImage);
-		t.vid = n.f0.tokenImage;
+		MyType t = new MyType();
+		t.setIdentifierName(n.f0.tokenImage);
 		return t;
 	}
 
