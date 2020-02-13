@@ -677,6 +677,14 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		Env env = envStack.peek();
 		String id = n.f0.f0.tokenImage;
 		MyType mt = n.f2.accept(this);
+		if (mt.toString().equals("int[]")) {
+			HashMap<Integer, String> list = new HashMap<>();
+			int arraySize = mt.value;
+			for (int i = 0; i < arraySize; i++) {
+				list.put(i, "array" + arrayvaroffset++);
+			}
+			listTable.put(id, list);
+		}
 //		String newvid = mt.toString() + Var.intoffset++;
 //		Var var = new Var(id, newvid, mt.f0, mt.value, env.id);
 //		varTable.put(id, var);
@@ -1007,8 +1015,9 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 				size); //The base address' value will store the array size
 		MyType _ret = new MyType("int[]");
 		_ret.vid = vaporName;
+		_ret.value = size;
 		return _ret;
-    }
+	}
 
     /**
      * f0 -> "!"
@@ -1059,7 +1068,15 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	public MyType visit(Identifier n) {
 		n.f0.accept(this);
 		MyType t = new MyType();
+		Var var = varTable.get(n.f0.tokenImage);
+		if (var != null) {
+			t.vid = var.vid;
+			t.value = var.value;
+		} else {
+			t.vid = n.f0.tokenImage;
+		}
 		t.setIdentifierName(n.f0.tokenImage);
+
 		return t;
 	}
 
@@ -1325,11 +1342,11 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		printer.println(arrayLookupOffset++ + ": " + "o = MulS(" +
 				index +
 				" " +
-				"4");
+				"4)");
 		printer.addIndentation();
 		printer.println("d = Add(" +
 				baseAddressOfArray +
-				" o"
+				" o)"
 		);
 		printer.println("r = [d+4]");
 		printer.removeIndentation();
