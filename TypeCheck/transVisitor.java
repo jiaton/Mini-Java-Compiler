@@ -681,7 +681,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 			HashMap<Integer, String> list = new HashMap<>();
 			int arraySize = mt.value;
 			for (int i = 0; i < arraySize; i++) {
-				list.put(i, "array" + arrayvaroffset++);
+				list.put(i, "array" + id + i);
 			}
 			listTable.put(id, list);
 		}
@@ -738,10 +738,42 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	 */
 	public MyType visit(ArrayAssignmentStatement n) {
 		MyType _ret = null;
+		MyType identifier = n.f0.accept(this);
 		MyType e1 = n.f2.accept(this);
 		MyType e2 = n.f5.accept(this);
-		String listname = listTable.get(n.f0.f0.tokenImage).get(e1.value);
-		printer.println(listname + "=" + e2.vid);
+		String baseAddressVid = varTable.get(identifier.getIdentifierName()).vid;
+		int index = e1.value;
+		String newVal = e2.vid;
+		String tmpVaporName = "classvar." + classvaroffset++;
+		printer.println("s = [" +
+				baseAddressVid +
+				"]");
+		printer.println("ok = LtS(" +
+				index +
+				" " +
+				"s" +
+				")");
+		printer.println("if ok goto:" + arrayLookupOffset);
+		printer.println("Error(\"Array index out of bounds\")");
+		printer.println(arrayLookupOffset++ + ": ok = Lts(" +
+				"-1 " +
+				" " +
+				index +
+				")");
+		printer.addIndentation();
+		printer.println("if ok goto :" + arrayLookupOffset);
+		printer.println("Error(\"Array index out of bounds\")");
+		printer.removeIndentation();
+		printer.println(arrayLookupOffset++ + ": o = MulS(" +
+				index + " 4)");
+		printer.addIndentation();
+		printer.println("d = Add(" +
+				baseAddressVid + " o)");
+		printer.println("classvar." + classvaroffset + " = d + 4");
+		printer.println("[classvar." + classvaroffset++ + "] = " + newVal);
+
+		printer.removeIndentation();
+
 		return _ret;
 	}
 
@@ -1348,11 +1380,12 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 				baseAddressOfArray +
 				" o)"
 		);
-		printer.println("r = [d+4]");
+		String receiverVid = "intvar." + intvaroffset++;
+		printer.println(receiverVid + " = [d+4]");
 		printer.removeIndentation();
 
 		_ret = new MyType("int");
-
+		_ret.vid = receiverVid;
 		return _ret;
 	}
 
