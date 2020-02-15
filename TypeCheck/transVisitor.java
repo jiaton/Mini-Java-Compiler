@@ -1232,7 +1232,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
         MyType t2 = n.f2.accept(this);
         MyType _ret = new MyType("boolean");
         String tmpVar = "booleanvar."+booleanvaroffset++;
-		printer.println(tmpVar + " = " + "And( " + t1.vid+" "+ t2.vid+")");
+		printer.println(tmpVar + " = " + "MulS( " + t1.vid+" "+ t2.vid+")");
         return _ret;
     }
 
