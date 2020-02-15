@@ -22,7 +22,8 @@ public class Env {
     public void printvTable(){
         System.out.println("const vmt_"+id);
         for(Map.Entry<String,Integer> entry : vtable.entrySet()){
-            System.out.println("   :"+entry.getKey()+"     test: offset:"+entry.getValue());
+            System.out.println("   :"+entry.getKey());
+            //System.out.println("   :"+entry.getKey()+"     test: offset:"+entry.getValue());
         }
     }
 
