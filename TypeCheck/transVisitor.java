@@ -912,7 +912,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 				"[" +
 				newClassVar +
 				"+" +
-				methodOffset
+				methodOffset * 4
 				+
 				"]");
 		String returnValueType = envTable.get(className).methodTable.get(methodId).returnValue.toString();
