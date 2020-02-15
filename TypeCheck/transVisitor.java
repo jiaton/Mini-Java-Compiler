@@ -894,15 +894,26 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		n.f4.accept(this);
 		n.f5.accept(this);
 		String className; //the caller Class
-		if (classIdentifier.getIdentifierName() != null) { //Class name
-			className = varTable.get(classIdentifier.getIdentifierName()).type.toString();
-		} else { //identifier name
+		Boolean isThisClass = false;
+
+		if (classIdentifier.getIdentifierName() == null) { //Class name
 			className = classIdentifier.toString();
+		} else if (classIdentifier.getIdentifierName().equals("this")) {  //Class name
+			isThisClass = true;
+			className = classIdentifier.toString();
+		} else {  //identifier name
+			className = varTable.get(classIdentifier.getIdentifierName()).type.toString();
 		}
+
 		String methodName = n.f2.f0.tokenImage;
 		String methodId = className + "." + methodName;
 		int methodOffset = envTable.get(className).vtable.get(methodId);
-		String storedVaporVar = varTable.get(className).vid;
+		String storedVaporVar;
+		if (isThisClass) {
+			storedVaporVar = "this";
+		} else {
+			storedVaporVar = varTable.get(className).vid;
+		}
 		String newClassVar = "classvar." + classvaroffset++;
 		printer.println(newClassVar + " = " +
 				"[" +
@@ -1014,10 +1025,12 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
      */
     @Override
     public MyType visit(ThisExpression n) {
-        n.f0.accept(this);
-        Env env = envStack.peek();
-        return new MyType(env.classOfMethod);
-    }
+		n.f0.accept(this);
+		Env env = envStack.peek();
+		MyType t = new MyType(env.classOfMethod);
+		t.setIdentifierName("this");
+		return t;
+	}
 
     /**
      * f0 -> "new"
