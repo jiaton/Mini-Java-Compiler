@@ -1129,7 +1129,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 
 		String className = n.f1.f0.tokenImage;
 		String vaporName = "classvar." + classvaroffset++;
-		int sizeWithTableHead = classSize.get(className) + 4;
+		int sizeWithTableHead = classSize.get(className) * 4 + 4;
 		printer.println(vaporName
 				+ " = HeapAllocZ(" +
 				+sizeWithTableHead +
