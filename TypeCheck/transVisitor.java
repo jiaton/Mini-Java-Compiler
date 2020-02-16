@@ -628,16 +628,27 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		n.f7.accept(this);
 		n.f8.accept(this);
 		n.f9.accept(this);
-		n.f10.accept(this);
+		MyType returnValIdentifier = n.f10.accept(this);
 		n.f11.accept(this);
 		n.f12.accept(this);
-		printer.println("ret ");
+		if (returnValIdentifier.toString().equals("int") || returnValIdentifier.toString().equals("boolean")) { //return int value
+			printer.println("ret " + returnValIdentifier.value);
+		} else if (env.record.get(returnValIdentifier.getIdentifierName()) != null) { // return var in classField (record)
+			int positionInRecord = env.record.get(returnValIdentifier.getIdentifierName());
+			printer.println("ret " + "[this+" + positionInRecord * 4 + "]");
+		} else if (varTable.get(returnValIdentifier.getIdentifierName()) != null) { // return var inside this method
+			String tmp = varTable.get(returnValIdentifier.getIdentifierName()).vid;
+			printer.println("ret " + tmp);
+		} else { // no return value
+			printer.println("ret");
+		}
+
 		envStack.pop();
 		printer.removeIndentation();
 		printer.println();
 		ArrayList<String> notFieldKeys = new ArrayList<>();
 		for (Map.Entry<String, Var> entry : varTable.entrySet()) {
-			if (entry.getValue().isField == false) {
+			if (!entry.getValue().isField) {
 				notFieldKeys.add(entry.getKey());
 			}
 		}
