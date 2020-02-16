@@ -645,8 +645,8 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		n.f12.accept(this);
 		if (returnValIdentifier.toString().equals("int") || returnValIdentifier.toString().equals("boolean")) { //return int value
 			printer.println("ret " + returnValIdentifier.value);
-		} else if (env.record.get(returnValIdentifier.getIdentifierName()) != null) { // return var in classField (record)
-			int positionInRecord = env.record.get(returnValIdentifier.getIdentifierName());
+		} else if (classenv.record.get(returnValIdentifier.getIdentifierName()) != null) { // return var in classField (record)
+			int positionInRecord = classenv.record.get(returnValIdentifier.getIdentifierName());
 			printer.println("ret " + "[this+" + positionInRecord * 4 + "]");
 		} else if (varTable.get(returnValIdentifier.getIdentifierName()) != null) { // return var inside this method
 			String tmp = varTable.get(returnValIdentifier.getIdentifierName()).vid;
