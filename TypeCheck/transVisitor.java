@@ -257,6 +257,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 				exit(-1);        //Env.has(string(id))
 			}
 //			childclass.varTable.entrySet().add(entry);
+			if(varTable.containsKey(entry.getKey()))	varTable.remove(entry.getKey());
 			childclass.varTable.put(entry.getKey(), entry.getValue());
 		}
 	}
@@ -457,6 +458,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		for (Map.Entry<String, MyType> entry : classenv.varTable.entrySet()) {
 			String newvid = entry.getKey();
 			Var var = new Var(entry.getKey(), newvid, entry.getValue().f0, 0, classenv.id);
+			if(varTable.containsKey(entry.getKey()))	varTable.remove(entry.getKey());
 			varTable.put(entry.getKey(), var);
 		}
 	}
@@ -679,24 +681,32 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		n.f1.accept(this);
 		MyType type = MyType.toMyType(n.f0);
 		String newvid;
-		switch(n.f0.f0.which){
-			case 0:
-				newvid = "array"+arrayvaroffset++;    // TODO: 2/12/2020 check other places
-				break;
-			case 1:
-				newvid = "boolean"+booleanvaroffset++;
-				break;
-			case 2:
-				newvid = "int"+intvaroffset++;
-				break;
-			case 3:
-				newvid = "class"+classvaroffset++;
-				break;
-			default:
-				newvid = "defaultatVarDeclaration";
+		if(varTable.containsKey(n.f1.f0.tokenImage)){
+			Var var = varTable.get(n.f1.f0.tokenImage);
+			var.type=type.f0;
+			var.value=0;
+			var.envid=envStack.peek().id;
+		}else{
+			switch(n.f0.f0.which){
+				case 0:
+					newvid = "array"+arrayvaroffset++;    // TODO: 2/12/2020 check other places
+					break;
+				case 1:
+					newvid = "boolean"+booleanvaroffset++;
+					break;
+				case 2:
+					newvid = "int"+intvaroffset++;
+					break;
+				case 3:
+					newvid = "class"+classvaroffset++;
+					break;
+				default:
+					newvid = "defaultatVarDeclaration";
+			}
+			Var var = new Var(n.f1.f0.tokenImage, newvid, type.f0, 0, envStack.peek().id);
+			varTable.put(n.f1.f0.tokenImage,var);
 		}
-		Var var = new Var(n.f1.f0.tokenImage, newvid, type.f0, 0, envStack.peek().id);
-		varTable.put(n.f1.f0.tokenImage,var);
+
 		return _ret;
 	}
 
@@ -884,27 +894,50 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		MyType type = MyType.toMyType(n.f0);
 		n.f0.accept(this);
 		String newvid;
-		switch(n.f0.f0.which){
-			case 0:
-				newvid = "array"+arrayvaroffset++;    // TODO: 2/12/2020 check other places
-				break;
-			case 1:
-				newvid = "boolean"+booleanvaroffset++;
-				break;
-			case 2:
-				newvid = "int"+intvaroffset++;
-				break;
-			case 3:
-				newvid = "class"+classvaroffset++;
-				break;
-			default:
-				newvid = "defaultatVarDeclaration";
+		if(varTable.containsKey(n.f1.f0.tokenImage)){
+			Var var = varTable.get(n.f1.f0.tokenImage);
+			var.type=type.f0;
+			var.value=0;
+			var.envid=envStack.peek().id;
+		}else{
+			switch(n.f0.f0.which){
+				case 0:
+					newvid = "array"+arrayvaroffset++;    // TODO: 2/12/2020 check other places
+					break;
+				case 1:
+					newvid = "boolean"+booleanvaroffset++;
+					break;
+				case 2:
+					newvid = "int"+intvaroffset++;
+					break;
+				case 3:
+					newvid = "class"+classvaroffset++;
+					break;
+				default:
+					newvid = "defaultatVarDeclaration";
+			}
+			Var var = new Var(n.f1.f0.tokenImage, newvid, type.f0, 0, envStack.peek().id);
+			//if(varTable.containsKey(n.f1.f0.tokenImage))	varTable.remove(n.f1.f0.tokenImage);
+			varTable.put(n.f1.f0.tokenImage,var);
 		}
-		Var var = new Var(n.f1.f0.tokenImage, newvid, type.f0, 0, envStack.peek().id);
-		varTable.put(n.f1.f0.tokenImage,var);
+
+		//out.println("put "+n.f1.f0.tokenImage+" as "+var);
+		//if(envStack.peek().isMethod)
+		//	printer.println(newvid+"=HeapAllocZ(4)");
 		return _ret;
 	}
 
+	/**
+	 * f0 -> AndExpression()
+	 *       | CompareExpression()
+	 *       | PlusExpression()
+	 *       | MinusExpression()
+	 *       | TimesExpression()
+	 *       | ArrayLookup()
+	 *       | ArrayLength()
+	 *       | MessageSend()
+	 *       | PrimaryExpression()
+	 */
 	@Override
 	public MyType visit(Expression n) {
 		return n.f0.accept(this);
@@ -950,10 +983,14 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 			storedVaporVar = classIdentifier.vid;
 		} else {
 //			storedVaporVar = varTable.get(className).vid;
-			storedVaporVar = classIdentifier.getIdentifierName();
+			storedVaporVar = varTable.get(classIdentifier.getIdentifierName()).vid;
 		}
 
+
 		String newClassVar = "classvar." + classvaroffset++;
+//		if(varTable.containsKey(classIdentifier.identifierName)){
+//			newClassVar = varTable.get(classIdentifier.identifierName).vid;
+//		}
 		printer.println(newClassVar + " = " +
 				"[" +
 				storedVaporVar +
@@ -984,7 +1021,12 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		StringBuilder parameterString = new StringBuilder();
 		for (MyType parameter : parameterList) {
 			parameterString.append(" ");
-			parameterString.append(parameter.value);
+			if(varTable.get(parameter.f0.tokenImage)==null){
+				parameterString.append(parameter.value);
+			}else{
+				parameterString.append(varTable.get(parameter.f0.tokenImage).vid);
+			}
+
 		}
 
 		printer.println(returnValue + " = " +
@@ -1041,7 +1083,13 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	 */
 	@Override
 	public MyType visit(PrimaryExpression n) {
-		return n.f0.accept(this);
+		MyType _ret=n.f0.accept(this);
+		if(n.f0.which==3){
+			_ret=new MyType(((Identifier)n.f0.choice).f0.tokenImage);
+			_ret.identifierName=((Identifier)n.f0.choice).f0.tokenImage;
+		}
+
+		return _ret;
 	}
 
     /**
@@ -1068,6 +1116,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		Env env = envStack.peek();
 		MyType t = new MyType(env.classOfMethod);
 		t.setIdentifierName("this");
+		t.vid="this";
 		return t;
 	}
 
@@ -1186,8 +1235,17 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 				+ " = HeapAllocZ(" +
 				+sizeWithTableHead +
 				")");
-		Var var = new Var(className, vaporName, null, 0, envStack.peek().id);
-		varTable.put(className, var);
+		if(varTable.containsKey(className)){
+			Var var = varTable.get(className);
+			var.type=null;
+			var.value=0;
+			var.envid=envStack.peek().id;
+		}else{
+			Var var = new Var(className, vaporName, null, 0, envStack.peek().id);
+			//if(varTable.containsKey(className))	varTable.remove(className);
+			varTable.put(className, var);
+		}
+
 		printer.println("[" +
 				vaporName +
 				"] = :vmt_" +
