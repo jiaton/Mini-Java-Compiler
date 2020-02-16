@@ -604,6 +604,9 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	 */
 	public MyType visit(MethodDeclaration n) {
 		MyType _ret = null;
+		for (Map.Entry<String, Var> entry : varTable.entrySet()) {
+			entry.getValue().isField = true;
+		}
 		Env classenv = envStack.peek();
 		String methodid = classenv.id + "." + n.f2.f0.toString();
 		MethodType methodtype = classenv.methodTable.get(methodid);
@@ -632,6 +635,16 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		envStack.pop();
 		printer.removeIndentation();
 		printer.println();
+		ArrayList<String> notFieldKeys = new ArrayList<>();
+		for (Map.Entry<String, Var> entry : varTable.entrySet()) {
+			if (entry.getValue().isField == false) {
+				notFieldKeys.add(entry.getKey());
+			}
+		}
+		for (String key : notFieldKeys) {
+			varTable.remove(key);
+		}
+
 		return _ret;
 	}
 

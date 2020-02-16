@@ -8,7 +8,8 @@ public class Var {
     public NodeToken type;
     public int value;
     public String envid;
-    static int intoffset=0;
+    static int intoffset = 0;
+    public boolean isField = false;
     public Var(String id,String newvid,NodeToken mtype,int mvalue,String eid){
         jid = id;
         vid = newvid;
