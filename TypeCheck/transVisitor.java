@@ -453,6 +453,16 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		printer.println(var.vid + " = " + vid);             // TODO: 2/12/2020 check v or j
 	}
 
+
+	public void addFieldsVar(Env classenv) {
+		for (Map.Entry<String, MyType> entry : classenv.varTable.entrySet()) {
+			String newvid = entry.getKey();
+			Var var = new Var(entry.getKey(), newvid, entry.getValue().f0, 0, classenv.id);
+			varTable.put(entry.getKey(), var);
+		}
+	}
+
+
 	/**
 	 * f0 -> MainClass()
 	 * f1 -> ( TypeDeclaration() )*
@@ -604,9 +614,6 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	 */
 	public MyType visit(MethodDeclaration n) {
 		MyType _ret = null;
-		for (Map.Entry<String, Var> entry : varTable.entrySet()) {
-			entry.getValue().isField = true;
-		}
 		Env classenv = envStack.peek();
 		String methodid = classenv.id + "." + n.f2.f0.toString();
 		MethodType methodtype = classenv.methodTable.get(methodid);
@@ -618,6 +625,10 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		printer.print("\nfunc ");
 		printer.print(env.id);
 		printer.println(" " + env.methodTable.get(env.id).printInVapor());
+		addFieldsVar(classenv);
+		for (Map.Entry<String, Var> entry : varTable.entrySet()) {
+			entry.getValue().isField = true;
+		}
 		n.f0.accept(this);
 		n.f1.accept(this);
 		n.f2.accept(this);
