@@ -680,32 +680,32 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		n.f0.accept(this);
 		n.f1.accept(this);
 		MyType type = MyType.toMyType(n.f0);
-		String newvid;
-		if(varTable.containsKey(n.f1.f0.tokenImage)){
-			Var var = varTable.get(n.f1.f0.tokenImage);
-			var.type=type.f0;
-			var.value=0;
-			var.envid=envStack.peek().id;
-		}else{
-			switch(n.f0.f0.which){
-				case 0:
-					newvid = "array"+arrayvaroffset++;    // TODO: 2/12/2020 check other places
-					break;
-				case 1:
-					newvid = "boolean"+booleanvaroffset++;
-					break;
-				case 2:
-					newvid = "int"+intvaroffset++;
-					break;
-				case 3:
-					newvid = "class"+classvaroffset++;
-					break;
-				default:
-					newvid = "defaultatVarDeclaration";
-			}
-			Var var = new Var(n.f1.f0.tokenImage, newvid, type.f0, 0, envStack.peek().id);
+//		String newvid;
+//		if(varTable.containsKey(n.f1.f0.tokenImage)){
+//			Var var = varTable.get(n.f1.f0.tokenImage);
+//			var.type=type.f0;
+//			var.value=0;
+//			var.envid=envStack.peek().id;
+//		}else{
+//			switch(n.f0.f0.which){
+//				case 0:
+//					newvid = "array"+arrayvaroffset++;    // TODO: 2/12/2020 check other places
+//					break;
+//				case 1:
+//					newvid = "boolean"+booleanvaroffset++;
+//					break;
+//				case 2:
+//					newvid = "int"+intvaroffset++;
+//					break;
+//				case 3:
+//					newvid = "class"+classvaroffset++;
+//					break;
+//				default:
+//					newvid = "defaultatVarDeclaration";
+//			}
+			Var var = new Var(n.f1.f0.tokenImage, n.f1.f0.tokenImage, type.f0, 0, envStack.peek().id);
 			varTable.put(n.f1.f0.tokenImage,var);
-		}
+		//}
 
 		return _ret;
 	}
