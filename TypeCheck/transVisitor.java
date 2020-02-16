@@ -7,8 +7,7 @@ import java.awt.*;
 import java.awt.dnd.DropTarget;
 import java.util.*;
 
-import static java.lang.System.exit;
-import static java.lang.System.setOut;
+import static java.lang.System.*;
 
 
 public class transVisitor extends GJNoArguDepthFirst<MyType> {
@@ -943,9 +942,12 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		String methodName = n.f2.f0.tokenImage;
 		String methodId = className + "." + methodName;
 		int methodOffset = envTable.get(className).vtable.get(methodId);
+		/*Get Stored Vapor Var of the caller.*/
 		String storedVaporVar;
 		if (isThisClass) {
 			storedVaporVar = "this";
+		} else if (classIdentifier.vid != null) {
+			storedVaporVar = classIdentifier.vid;
 		} else {
 //			storedVaporVar = varTable.get(className).vid;
 			storedVaporVar = classIdentifier.getIdentifierName();
@@ -1200,7 +1202,9 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 				allocNullLabel +
 				":"
 		);
-		return new MyType(className);
+		MyType _ret = new MyType(className);
+		_ret.vid = vaporName;
+		return _ret;
 	}
 
 	/**
