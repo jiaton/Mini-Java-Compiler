@@ -999,6 +999,10 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		String storedVaporVar;
 		if (isThisClass) {
 			storedVaporVar = "this";
+		} else if (classIdentifier.isFieldVar) {
+			String tmpVaporName = "classvar." + classvaroffset++;
+			printer.println(tmpVaporName + " = " + classIdentifier.vid);
+			storedVaporVar = tmpVaporName;
 		} else if (classIdentifier.vid != null) {
 			storedVaporVar = classIdentifier.vid;
 		} else {
@@ -1041,12 +1045,14 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		StringBuilder parameterString = new StringBuilder();
 		for (MyType parameter : parameterList) {
 			parameterString.append(" ");
-//			out.println(parameter.identifierName);
-//			out.println(parameter.f0.tokenImage);
-//			if(varTable.get(parameter.identifierName)==null){
-//				parameterString.append(parameter.value);
-//			}else{
+			if (parameter.isFieldVar) {
+				String tmpVaporName = "classvar." + classvaroffset++;
+				printer.println(tmpVaporName + " = " + parameter.vid);
+				parameterString.append(tmpVaporName);
+			} else {
 				parameterString.append(parameter.vid);
+			}
+
 			//}
 
 		}
@@ -1107,16 +1113,19 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	 */
 	@Override
 	public MyType visit(PrimaryExpression n) {
-		MyType _ret=n.f0.accept(this);
+		MyType _ret = n.f0.accept(this);
 		String vid = _ret.vid;
-		if(n.f0.which==3){
-			_ret=new MyType(((Identifier)n.f0.choice).f0.tokenImage);
-			_ret.identifierName=((Identifier)n.f0.choice).f0.tokenImage;
+		boolean isFieldVar = _ret.isFieldVar;
+		if (n.f0.which == 3) {
+			_ret = new MyType(((Identifier) n.f0.choice).f0.tokenImage);
+			_ret.identifierName = ((Identifier) n.f0.choice).f0.tokenImage;
 			//out.println(((Identifier)n.f0.choice).f0.tokenImage);
-			_ret.vid=vid;
+			_ret.vid = vid;
+			_ret.isFieldVar = isFieldVar;
+
 		}
-		if(n.f0.which==8){
-			_ret=((BracketExpression)n.f0.choice).f1.accept(this);
+		if (n.f0.which == 8) {
+			_ret = ((BracketExpression) n.f0.choice).f1.accept(this);
 		}
 
 		return _ret;
@@ -1237,6 +1246,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		if (var != null) {
 			if (var.isField) {
 				t.vid = var.fieldString;
+				t.isFieldVar = true;
 			} else {
 				t.vid = var.vid;
 			}

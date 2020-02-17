@@ -16,6 +16,7 @@ class MyType implements Node {
     int value;
     NodeToken f0;
     String identifierName;
+    boolean isFieldVar = false;
 
     public String getIdentifierName() {
         return identifierName;
