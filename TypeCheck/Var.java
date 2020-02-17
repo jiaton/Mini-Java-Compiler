@@ -10,6 +10,7 @@ public class Var {
     public String envid;
     static int intoffset = 0;
     public boolean isField = false;
+    public String fieldString = null;
     public Var(String id,String newvid,NodeToken mtype,int mvalue,String eid){
         jid = id;
         vid = newvid;

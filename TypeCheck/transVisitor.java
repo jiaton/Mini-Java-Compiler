@@ -449,8 +449,14 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 
 	public void printAssignmentStatement(String id, String vid) {
 		Var var = varTable.get(id);
-//		printer.println(var.jid + "=HeapAllocZ(4)");
-		printer.println(var.vid + " = " + vid);             // TODO: 2/12/2020 check v or j
+		printer.println(var.jid + "=HeapAllocZ(4)");
+		if(var.fieldString!=null){
+			printer.println(var.fieldString + " = " + vid);
+		}else
+		{
+			printer.println(var.vid + " = " + vid);             // TODO: 2/12/2020 check v or j
+		}
+
 	}
 
 
@@ -460,6 +466,11 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 			Var var = new Var(entry.getKey(), newvid, entry.getValue().f0, 0, classenv.id);
 			if(varTable.containsKey(entry.getKey()))	varTable.remove(entry.getKey());
 			varTable.put(entry.getKey(), var);
+
+			int positionInRecord = classenv.record.get(entry.getKey());
+////			String newReturnVaporName = var.vid;
+////			printer.println(newReturnVaporName+" = " + "[this+" + ((positionInRecord * 4) +4)+"]");
+			var.fieldString="[this+" + ((positionInRecord * 4) +4)+"]";
 		}
 	}
 
@@ -647,7 +658,9 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 			printer.println("ret " + returnValIdentifier.value);
 		} else if (classenv.record.get(returnValIdentifier.getIdentifierName()) != null) { // return var in classField (record)
 			int positionInRecord = classenv.record.get(returnValIdentifier.getIdentifierName());
-			printer.println("ret " + "[this+" + positionInRecord * 4 + "]");
+			String newReturnVaporName = "classvar."+classvaroffset++;
+			printer.println(newReturnVaporName+" = " + "[this+" + ((positionInRecord * 4) +4)+"]");
+			printer.println("ret "+newReturnVaporName);
 		} else if (varTable.get(returnValIdentifier.getIdentifierName()) != null) { // return var inside this method
 			String tmp = varTable.get(returnValIdentifier.getIdentifierName()).vid;
 			printer.println("ret " + tmp);
@@ -1084,9 +1097,11 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	@Override
 	public MyType visit(PrimaryExpression n) {
 		MyType _ret=n.f0.accept(this);
+		String vid = _ret.vid;
 		if(n.f0.which==3){
 			_ret=new MyType(((Identifier)n.f0.choice).f0.tokenImage);
 			_ret.identifierName=((Identifier)n.f0.choice).f0.tokenImage;
+			_ret.vid=vid;
 		}
 
 		return _ret;
@@ -1101,6 +1116,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
     public MyType visit(TrueLiteral n) {
 		n.f0.accept(this);
 		MyType _ret = new MyType("boolean");
+		_ret.vid = "1";
 		_ret.value = 1;
 		return _ret;
     }
@@ -1191,6 +1207,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
     public MyType visit(FalseLiteral n) {
 		n.f0.accept(this);
 		MyType _ret = new MyType("boolean");
+		_ret.vid = "0";
 		_ret.value = 0;
 		return _ret;
 	}
@@ -1207,6 +1224,11 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 			t.value = var.value;
 		} else {
 			t.vid = n.f0.tokenImage;
+//			if(!envStack.isEmpty()&&envStack.peek().isMethod){
+//				var = new Var(n.f0.tokenImage,t.vid,null,0,envStack.peek().id);
+//				varTable.put(n.f0.tokenImage,var);
+//			}
+
 		}
 		t.setIdentifierName(n.f0.tokenImage);
 
@@ -1520,4 +1542,5 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 				"]");
 		return _ret;
 	}
+
 }
