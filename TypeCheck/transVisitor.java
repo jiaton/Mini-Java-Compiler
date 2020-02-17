@@ -654,13 +654,15 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		MyType returnValIdentifier = n.f10.accept(this);
 		n.f11.accept(this);
 		n.f12.accept(this);
-		if (returnValIdentifier.toString().equals("int") || returnValIdentifier.toString().equals("boolean")) { //return int value
+		if (returnValIdentifier.toString().equals("int")) {
+			printer.println("ret " + returnValIdentifier.vid);
+		} else if (returnValIdentifier.toString().equals("boolean")) { //return int value
 			printer.println("ret " + returnValIdentifier.value);
 		} else if (classenv.record.get(returnValIdentifier.getIdentifierName()) != null) { // return var in classField (record)
 			int positionInRecord = classenv.record.get(returnValIdentifier.getIdentifierName());
-			String newReturnVaporName = "classvar."+classvaroffset++;
-			printer.println(newReturnVaporName+" = " + "[this+" + ((positionInRecord * 4) +4)+"]");
-			printer.println("ret "+newReturnVaporName);
+			String newReturnVaporName = "classvar." + classvaroffset++;
+			printer.println(newReturnVaporName + " = " + "[this+" + ((positionInRecord * 4) + 4) + "]");
+			printer.println("ret " + newReturnVaporName);
 		} else if (varTable.get(returnValIdentifier.getIdentifierName()) != null) { // return var inside this method
 			String tmp = varTable.get(returnValIdentifier.getIdentifierName()).vid;
 			printer.println("ret " + tmp);
