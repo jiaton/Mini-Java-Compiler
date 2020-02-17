@@ -1012,9 +1012,9 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 //			newClassVar = varTable.get(classIdentifier.identifierName).vid;
 //		}
 		printer.println(newClassVar + " = " +
-				"[" +
-				storedVaporVar +
-				"]");
+
+				storedVaporVar
+		);
 		printer.println(newClassVar + " = " +
 				"[" +
 				newClassVar +
@@ -1235,7 +1235,11 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		MyType t = new MyType();
 		Var var = varTable.get(n.f0.tokenImage);
 		if (var != null) {
-			t.vid = var.vid;
+			if (var.isField) {
+				t.vid = var.fieldString;
+			} else {
+				t.vid = var.vid;
+			}
 			t.value = var.value;
 		} else {
 			t.vid = n.f0.tokenImage;
