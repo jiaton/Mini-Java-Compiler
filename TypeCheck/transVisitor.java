@@ -815,18 +815,18 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 				" " +
 				"s" +
 				")");
-		printer.println("if ok goto:" + arrayLookupOffset);
+		printer.println("if ok goto: notOut" + arrayLookupOffset);
 		printer.println("Error(\"Array index out of bounds\")");
-		printer.println(arrayLookupOffset++ + ": ok = Lts(" +
+		printer.println("notOut" + arrayLookupOffset++ + ": ok = Lts(" +
 				"-1 " +
 				" " +
 				index +
 				")");
 		printer.addIndentation();
-		printer.println("if ok goto :" + arrayLookupOffset);
+		printer.println("if ok goto :notOut" + arrayLookupOffset);
 		printer.println("Error(\"Array index out of bounds\")");
 		printer.removeIndentation();
-		printer.println(arrayLookupOffset++ + ": o = MulS(" +
+		printer.println("notOut" + arrayLookupOffset++ + ": o = MulS(" +
 				index + " 4)");
 		printer.addIndentation();
 		printer.println("d = Add(" +
@@ -1515,38 +1515,38 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		MyType t2 = n.f2.accept(this);
 		int index = t2.value;
 		n.f3.accept(this);
-		String baseAddressOfArray = t1.vid;
-		String size = "intvar." + intvaroffset++;
-		printer.println(size + " = " + "[" +
-				baseAddressOfArray +
-				"]");
-		printer.println("ok = LtS(" +
-				index +
-				" " +
-				size +
-				")");
-		printer.println("if ok goto :" + arrayLookupOffset);
-		printer.println("Error(\"Array index out of bounds\")");
-		printer.println(arrayLookupOffset++ + ": ok = LtS(" +
-				"-1" +
-				" " +
-				index +
-				")");
-		printer.addIndentation();
-		printer.println("if ok goto :" + arrayLookupOffset);
-		printer.println("Error(\"Array index out of bounds\")");
-		printer.removeIndentation();
-		printer.println(arrayLookupOffset++ + ": " + "o = MulS(" +
-				index +
-				" " +
-				"4)");
-		printer.addIndentation();
-		printer.println("d = Add(" +
-				baseAddressOfArray +
-				" o)"
-		);
-		String receiverVid = "intvar." + intvaroffset++;
-		printer.println(receiverVid + " = [d+4]");
+	    String baseAddressOfArray = t1.vid;
+	    String size = "intvar." + intvaroffset++;
+	    printer.println(size + " = " + "[" +
+			    baseAddressOfArray +
+			    "]");
+	    printer.println("ok = LtS(" +
+			    index +
+			    " " +
+			    size +
+			    ")");
+	    printer.println("if ok goto :notOut" + arrayLookupOffset);
+	    printer.println("Error(\"Array index out of bounds\")");
+	    printer.println("notOut" + arrayLookupOffset++ + ": ok = LtS(" +
+			    "-1" +
+			    " " +
+			    index +
+			    ")");
+	    printer.addIndentation();
+	    printer.println("if ok goto :notOut" + arrayLookupOffset);
+	    printer.println("Error(\"Array index out of bounds\")");
+	    printer.removeIndentation();
+	    printer.println("notOut" + arrayLookupOffset++ + ": " + "o = MulS(" +
+			    index +
+			    " " +
+			    "4)");
+	    printer.addIndentation();
+	    printer.println("d = Add(" +
+			    baseAddressOfArray +
+			    " o)"
+	    );
+	    String receiverVid = "intvar." + intvaroffset++;
+	    printer.println(receiverVid + " = [d+4]");
 		printer.removeIndentation();
 
 		_ret = new MyType("int");
