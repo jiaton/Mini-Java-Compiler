@@ -1034,10 +1034,12 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		StringBuilder parameterString = new StringBuilder();
 		for (MyType parameter : parameterList) {
 			parameterString.append(" ");
-			if(varTable.get(parameter.f0.tokenImage)==null){
+//			out.println(parameter.identifierName);
+//			out.println(parameter.f0.tokenImage);
+			if(varTable.get(parameter.identifierName)==null){
 				parameterString.append(parameter.value);
 			}else{
-				parameterString.append(varTable.get(parameter.f0.tokenImage).vid);
+				parameterString.append(varTable.get(parameter.identifierName).vid);
 			}
 
 		}
@@ -1051,6 +1053,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 				")");
 		MyType myType_ret = new MyType(returnValueType);
 		myType_ret.vid = returnValue;
+		myType_ret.identifierName=classIdentifier.identifierName;
 		return myType_ret;
 	}
 
