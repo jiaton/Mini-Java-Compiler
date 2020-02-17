@@ -731,6 +731,9 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	 */
 	public MyType visit(AssignmentStatement n) {
 		MyType _ret = null;
+		if(n.f2.f0.which==7){
+			messagesendStack.push(n.f0.f0.tokenImage);
+		}
 		Env env = envStack.peek();
 		String id = n.f0.f0.tokenImage;
 		MyType mt = n.f2.accept(this);
@@ -978,15 +981,19 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 
 		if (classIdentifier.getIdentifierName() == null) { //Class name
 			className = classIdentifier.toString();
+			//out.println("1");
 		} else if (classIdentifier.getIdentifierName().equals("this")) {  //Class name
 			isThisClass = true;
 			className = classIdentifier.toString();
+			//out.println("2");
 		} else {  //identifier name
 			className = varTable.get(classIdentifier.getIdentifierName()).type.toString();
+			//out.println("3");
 		}
 
 		String methodName = n.f2.f0.tokenImage;
 		String methodId = className + "." + methodName;
+		out.println(className);
 		int methodOffset = envTable.get(className).vtable.get(methodId);
 		/*Get Stored Vapor Var of the caller.*/
 		String storedVaporVar;
@@ -1053,10 +1060,11 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 				")");
 		MyType myType_ret = new MyType(returnValueType);
 		myType_ret.vid = returnValue;
-		myType_ret.identifierName=classIdentifier.identifierName;
+		if(!messagesendStack.isEmpty())
+			myType_ret.identifierName=messagesendStack.pop();
 		return myType_ret;
 	}
-
+	public Stack<String> messagesendStack=new Stack<>();
 	/**
 	 * f0 -> Expression()
 	 * f1 -> ( ExpressionRest() )*
@@ -1104,7 +1112,11 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		if(n.f0.which==3){
 			_ret=new MyType(((Identifier)n.f0.choice).f0.tokenImage);
 			_ret.identifierName=((Identifier)n.f0.choice).f0.tokenImage;
+			out.println(((Identifier)n.f0.choice).f0.tokenImage);
 			_ret.vid=vid;
+		}
+		if(n.f0.which==8){
+			_ret=((BracketExpression)n.f0.choice).f1.accept(this);
 		}
 
 		return _ret;
