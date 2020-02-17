@@ -851,16 +851,16 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	public MyType visit(IfStatement n) {
 		MyType _ret = null;
 		MyType e = n.f2.accept(this);
-		String labels1 = "truebranch" + iflabeloffset;
+		String elselabel = "elsebranch" + iflabeloffset;
 		String labels2 = "end_if" + iflabeloffset++;
-		printer.println("if " + e.vid + " goto :" + labels1);
-		printer.addIndentation();
-		n.f6.accept(this);
-		printer.println("goto :" + labels2);
-		printer.removeIndentation();
-		printer.println(labels1 + ":");
+		printer.println("if0 " + e.vid + " goto :" + elselabel);
 		printer.addIndentation();
 		n.f4.accept(this);
+		printer.println("goto :" + labels2);
+		printer.println(elselabel + ":");
+		n.f6.accept(this);
+		printer.removeIndentation();
+		printer.addIndentation();
 		printer.removeIndentation();
 		printer.println(labels2 + ":");
 		return _ret;
