@@ -731,9 +731,9 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	 */
 	public MyType visit(AssignmentStatement n) {
 		MyType _ret = null;
-		if(n.f2.f0.which==7){
-			messagesendStack.push(n.f0.f0.tokenImage);
-		}
+//		if(n.f2.f0.which==7){
+//			messagesendStack.push(n.f0.f0.tokenImage);
+//		}
 		Env env = envStack.peek();
 		String id = n.f0.f0.tokenImage;
 		MyType mt = n.f2.accept(this);
@@ -993,7 +993,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 
 		String methodName = n.f2.f0.tokenImage;
 		String methodId = className + "." + methodName;
-		out.println(className);
+		//out.println(className);
 		int methodOffset = envTable.get(className).vtable.get(methodId);
 		/*Get Stored Vapor Var of the caller.*/
 		String storedVaporVar;
@@ -1043,11 +1043,11 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 			parameterString.append(" ");
 //			out.println(parameter.identifierName);
 //			out.println(parameter.f0.tokenImage);
-			if(varTable.get(parameter.identifierName)==null){
-				parameterString.append(parameter.value);
-			}else{
-				parameterString.append(varTable.get(parameter.identifierName).vid);
-			}
+//			if(varTable.get(parameter.identifierName)==null){
+//				parameterString.append(parameter.value);
+//			}else{
+				parameterString.append(parameter.vid);
+			//}
 
 		}
 
@@ -1060,11 +1060,11 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 				")");
 		MyType myType_ret = new MyType(returnValueType);
 		myType_ret.vid = returnValue;
-		if(!messagesendStack.isEmpty())
-			myType_ret.identifierName=messagesendStack.pop();
+//		if(!messagesendStack.isEmpty())
+//			myType_ret.identifierName=messagesendStack.pop();
 		return myType_ret;
 	}
-	public Stack<String> messagesendStack=new Stack<>();
+//	public Stack<String> messagesendStack=new Stack<>();
 	/**
 	 * f0 -> Expression()
 	 * f1 -> ( ExpressionRest() )*
@@ -1112,7 +1112,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		if(n.f0.which==3){
 			_ret=new MyType(((Identifier)n.f0.choice).f0.tokenImage);
 			_ret.identifierName=((Identifier)n.f0.choice).f0.tokenImage;
-			out.println(((Identifier)n.f0.choice).f0.tokenImage);
+			//out.println(((Identifier)n.f0.choice).f0.tokenImage);
 			_ret.vid=vid;
 		}
 		if(n.f0.which==8){
