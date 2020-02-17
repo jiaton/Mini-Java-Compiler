@@ -504,6 +504,12 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		n.f0.accept(this);
 		n.f1.accept(this);
 		n.f2.accept(this);
+		printer.println("func AllocArray(size)");
+		printer.println("  bytes = MulS(size 4)");
+		printer.println("  bytes = Add(bytes 4)");
+		printer.println("  v = HeapAllocZ(bytes)");
+		printer.println("  [v] = size");
+		printer.println("  ret v");
 		return _ret;
 	}
 
@@ -817,7 +823,10 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		}else if(n.f2.f0.which==7){
 
 		}
-		else{
+		else if(n.f2.f0.which==8&&((PrimaryExpression)n.f2.f0.choice).f0.which==3){
+			printAssignmentStatement(id, mt.vid);
+		}
+		else if(n.f2.f0.which==8&&((PrimaryExpression)n.f2.f0.choice).f0.which==5){
 			printAssignmentStatement(id, mt.vid);
 		}
 
@@ -868,43 +877,75 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	 * f6 -> ";"
 	 */
 	public MyType visit(ArrayAssignmentStatement n) {
+
 		MyType _ret = null;
-		MyType identifier = n.f0.accept(this);
+		//MyType identifier = n.f0.accept(this);
+
 		MyType e1 = n.f2.accept(this);
-		MyType e2 = n.f5.accept(this);
+
+		String leftvid;
+		if(varTable.containsKey(n.f0.f0.tokenImage)&&varTable.get(n.f0.f0.tokenImage).fieldString!=null){
+			leftvid = varTable.get(n.f0.f0.tokenImage).fieldString;
+		}else if(varTable.containsKey(n.f0.f0.tokenImage)){
+			leftvid = varTable.get(n.f0.f0.tokenImage).vid;
+		}else{
+			leftvid = "wronggggggggggggggggggggggggg";
+			out.println("arrayassignmentstatement went wrongnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn");
+		}
 		//String baseAddressVid = varTable.get(identifier.getIdentifierName()).vid;
-		String baseAddressVid = identifier.vid;
+		String baseAddressVid = leftvid;
 		String index = e1.vid;
-		String newVal = e2.vid;
+
 		//String tmpVaporName = "classvar." + classvaroffset++;
 		String tmpVaporName = "t."+classvaroffset++;
-		printer.println("s = [" +
-				baseAddressVid +
-				"]");
-		printer.println("ok = LtS(" +
-				index +
-				" " +
-				"s" +
-				")");
-		printer.println("if ok goto :notOut" + arrayLookupOffset);
-		printer.println("Error(\"Array index out of bounds\")");
-		printer.println("notOut" + arrayLookupOffset++ + ": ok = Lts(" +
-				"-1 " +
-				" " +
-				index +
-				")");
-		printer.addIndentation();
-		printer.println("if ok goto :notOut" + arrayLookupOffset);
-		printer.println("Error(\"Array index out of bounds\")");
-		printer.removeIndentation();
-		printer.println("notOut" + arrayLookupOffset++ + ": o = MulS(" +
-				index + " 4)");
-		printer.addIndentation();
-		printer.println("d = Add(" +
-				baseAddressVid + " o)");
-		//printer.println("classvar." + classvaroffset + " = d + 4");
-		printer.println("t." + classvaroffset + " = [d + 4]");
-		printer.println("t." + classvaroffset++ + " = " + newVal);
+		printer.println(tmpVaporName + " = "+ leftvid);
+		printer.println("if "+tmpVaporName+" goto :null"+allocationNullOffset++);
+		printer.println("	Error(\"null pointer\")");
+		printer.println("null"+(allocationNullOffset-1)+":");
+		String tmp2 = "t."+classvaroffset++;
+		printer.println(tmp2+" = ["+tmpVaporName+"]");
+		printer.println(tmp2+" = Lt("+e1.vid+" "+tmp2+")");
+		printer.println("if "+tmp2+" goto :null"+allocationNullOffset++);
+		printer.println("	Error(\"array index out of bounds\")");
+		printer.println("null"+(allocationNullOffset-1)+":");
+		printer.println(tmp2+" = MulS("+e1.vid+" 4"+")");
+		printer.println(tmp2+" = Add("+tmp2+" "+tmpVaporName+")");
+
+		MyType e2 = n.f5.accept(this);
+
+
+
+		String newVal = e2.vid;
+		printer.println("["+tmp2+"+4] = "+newVal);
+
+//
+//		printer.println("s = [" +
+//				baseAddressVid +
+//				"]");
+//		printer.println("ok = LtS(" +
+//				index +
+//				" " +
+//				"s" +
+//				")");
+//		printer.println("if ok goto :notOut" + arrayLookupOffset);
+//		printer.println("Error(\"Array index out of bounds\")");
+//		printer.println("notOut" + arrayLookupOffset++ + ": ok = Lts(" +
+//				"-1 " +
+//				" " +
+//				index +
+//				")");
+//		printer.addIndentation();
+//		printer.println("if ok goto :notOut" + arrayLookupOffset);
+//		printer.println("Error(\"Array index out of bounds\")");
+//		printer.removeIndentation();
+//		printer.println("notOut" + arrayLookupOffset++ + ": o = MulS(" +
+//				index + " 4)");
+//		printer.addIndentation();
+//		printer.println("d = Add(" +
+//				baseAddressVid + " o)");
+//		//printer.println("classvar." + classvaroffset + " = d + 4");
+//		printer.println("t." + classvaroffset + " = [d + 4]");
+//		printer.println("t." + classvaroffset++ + " = " + newVal);
 
 		printer.removeIndentation();
 
@@ -1282,20 +1323,30 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		n.f4.accept(this);
 		String sizeStr = t.vid;
 
-		printer.println("intvar." + intvaroffset + " = " + "MulS(" + sizeStr + " 4)");
-		printer.println("allocSize = Add(intvar." + intvaroffset++ + " 4)");
-		String vaporName = "arrayvar." + arrayvaroffset++;
+//		printer.println("intvar." + intvaroffset + " = " + "MulS(" + sizeStr + " 4)");
+//		printer.println("allocSize = Add(intvar." + intvaroffset++ + " 4)");
+//		String vaporName = "t." + arrayvaroffset++;
+//		printer.println(vaporName + " = " +
+//				"HeapAllocZ(" +
+//				"allocSize" +
+//				")");
+//		printer.println("[" +
+//				vaporName +
+//				"] = " +
+//				sizeStr); //The base address' value will store the array size
+//		MyType _ret = new MyType("int[]");
+//		_ret.vid = vaporName;
+//		_ret.value = Integer.parseInt(sizeStr);
+
+		String vaporName = "t." + classvaroffset++;
 		printer.println(vaporName + " = " +
-				"HeapAllocZ(" +
-				"allocSize" +
+				"call :AllocArray(" +
+				sizeStr +
 				")");
-		printer.println("[" +
-				vaporName +
-				"] = " +
-				sizeStr); //The base address' value will store the array size
 		MyType _ret = new MyType("int[]");
 		_ret.vid = vaporName;
-		_ret.value = Integer.parseInt(sizeStr);
+		//_ret.value = Integer.parseInt(sizeStr);
+
 		return _ret;
 	}
 
@@ -1314,7 +1365,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		} else {
 			_ret.value = 1;
 		}
-		String newVaporName = "booleanvar." + booleanvaroffset++;
+		String newVaporName = "t." + classvaroffset++;
 		printer.println(newVaporName + " = Sub(" +
 				1 +
 				" " + _ret.vid + ")"
@@ -1366,7 +1417,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 //				t.vid = var.fieldString;
 ////				t.isFieldVar = true;
 				// TODO: 2/17/2020 don't understand
-				String tmpVaporName = "classvar." + classvaroffset++;
+				String tmpVaporName = "t." + classvaroffset++;
 				printer.println(tmpVaporName + " = " + var.fieldString);
 //				t.vid = var.fieldString;
 				t.vid = tmpVaporName;
@@ -1521,7 +1572,12 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		n.f1.accept(this);
 		MyType t2 = n.f2.accept(this);
 		MyType _ret = new MyType("boolean");
-		String tmpVar = "booleanvar." + booleanvaroffset++;
+		String tmpVar;
+		if(isAssignment){
+			tmpVar = leftid;
+		}else{
+			tmpVar = "t."+ classvaroffset++;
+		}
 		printer.println(tmpVar + " = " + "MulS( " + t1.vid + " " + t2.vid + ")");
 		_ret.vid = tmpVar;
 		_ret.value = t1.value * t2.value;
@@ -1543,8 +1599,12 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		MyType t1 = n.f0.accept(this);
 		n.f1.accept(this);
 		MyType t2 = n.f2.accept(this);
-
-		String tmpVar = "booleanvar." + booleanvaroffset++;
+		String tmpVar;
+		if(isAssignment){
+			tmpVar = leftid;
+		}else{
+			tmpVar = "t."+ classvaroffset++;
+		}
 		printer.println(tmpVar + " = LtS(" + t1.vid +
 				" " + t2.vid +
 				")");
@@ -1567,7 +1627,12 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
         MyType t1 = n.f0.accept(this);
         n.f1.accept(this);
         MyType t2 = n.f2.accept(this);
-        String tmpVar = "intvar."+ intvaroffset++;
+		String tmpVar;
+		if(isAssignment){
+        	tmpVar = leftid;
+		}else{
+			tmpVar = "t."+ classvaroffset++;
+		}
         _ret = new MyType("int");
         _ret.vid = tmpVar;
 		printer.println(tmpVar + " = Add(" +
@@ -1591,7 +1656,12 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
         MyType t1 = n.f0.accept(this);
         n.f1.accept(this);
         MyType t2 = n.f2.accept(this);
-        String tmpVar = "intvar."+ intvaroffset++;
+		String tmpVar;
+		if(isAssignment){
+			tmpVar = leftid;
+		}else{
+			tmpVar = "t."+ classvaroffset++;
+		}
         _ret = new MyType("int");
         _ret.vid = tmpVar;
 		printer.println(tmpVar + " = Sub(" +
@@ -1615,7 +1685,12 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
         MyType t1 = n.f0.accept(this);
         n.f1.accept(this);
         MyType t2 = n.f2.accept(this);
-        String tmpVar = "intvar."+ intvaroffset++;
+		String tmpVar;
+		if(isAssignment){
+			tmpVar = leftid;
+		}else{
+			tmpVar = "t."+ classvaroffset++;
+		}
         _ret = new MyType("int");
         _ret.vid = tmpVar;
 		printer.println(tmpVar + " = Mul(" +
@@ -1643,37 +1718,38 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		String index = t2.vid;
 		n.f3.accept(this);
 	    String baseAddressOfArray = t1.vid;
-	    String size = "intvar." + intvaroffset++;
+		printer.println("if "+t1.vid+" goto :null" + allocationNullOffset);
+		printer.println("Error(\"null pointer\")");
+		printer.println("null" + allocationNullOffset++ + ":");
+
+	    String size = "t." + classvaroffset++;
 	    printer.println(size + " = " + "[" +
 			    baseAddressOfArray +
 			    "]");
-	    printer.println("ok = LtS(" +
+	    printer.println(size+" = Lt(" +
 			    index +
 			    " " +
 			    size +
 			    ")");
-	    printer.println("if ok goto :notOut" + arrayLookupOffset);
+	    printer.println("if "+size+" goto :notOut" + arrayLookupOffset);
 	    printer.println("Error(\"Array index out of bounds\")");
-	    printer.println("notOut" + arrayLookupOffset++ + ": ok = LtS(" +
-			    "-1" +
-			    " " +
-			    index +
-			    ")");
-	    printer.addIndentation();
-	    printer.println("if ok goto :notOut" + arrayLookupOffset);
-	    printer.println("Error(\"Array index out of bounds\")");
-	    printer.removeIndentation();
-	    printer.println("notOut" + arrayLookupOffset++ + ": " + "o = MulS(" +
-			    index +
-			    " " +
-			    "4)");
-	    printer.addIndentation();
-	    printer.println("d = Add(" +
-			    baseAddressOfArray +
-			    " o)"
+	    printer.println("notOut" + arrayLookupOffset++ + ":");
+
+	    printer.println(size+" = MulS(" +
+			    t2.vid +
+			    " 4)"
 	    );
-	    String receiverVid = "intvar." + intvaroffset++;
-	    printer.println(receiverVid + " = [d+4]");
+		printer.println(size+" = Add(" +
+				size +
+				" "+baseAddressOfArray+")"
+		);
+		String receiverVid;
+		if(isAssignment){
+			receiverVid= leftid;
+		}else{
+			receiverVid="t."+classvaroffset++;
+		}
+	    printer.println(receiverVid + " = ["+ size +"+4]");
 		printer.removeIndentation();
 
 		_ret = new MyType("int");
