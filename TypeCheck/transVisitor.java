@@ -447,15 +447,21 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		return method;
 	}
 
+	public void printAssignmentStatement(String id, int value) {
+		Var var = varTable.get(id);
+		printer.println(var.vid + " = "+value);
+	}
+
 	public void printAssignmentStatement(String id, String vid) {
 		Var var = varTable.get(id);
-		printer.println(var.jid + "=HeapAllocZ(4)");
-		if(var.fieldString!=null){
+		//printer.println(var.jid + "=HeapAllocZ(4)");
+		if(var.fieldString!=null) {
 			printer.println(var.fieldString + " = " + vid);
-		}else
-		{
-			printer.println(var.vid + " = " + vid);             // TODO: 2/12/2020 check v or j
 		}
+//		}else
+//		{
+//			printer.println(var.vid + " = " + vid);             // TODO: 2/12/2020 check v or j
+//		}
 
 	}
 
@@ -660,7 +666,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 			printer.println("ret " + returnValIdentifier.value);
 		} else if (classenv.record.get(returnValIdentifier.getIdentifierName()) != null) { // return var in classField (record)
 			int positionInRecord = classenv.record.get(returnValIdentifier.getIdentifierName());
-			String newReturnVaporName = "classvar." + classvaroffset++;
+			String newReturnVaporName = "t." + classvaroffset++;
 			printer.println(newReturnVaporName + " = " + "[this+" + ((positionInRecord * 4) + 4) + "]");
 			printer.println("ret " + newReturnVaporName);
 		} else if (varTable.get(returnValIdentifier.getIdentifierName()) != null) { // return var inside this method
@@ -682,7 +688,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		for (String key : notFieldKeys) {
 			varTable.remove(key);
 		}
-
+		classvaroffset=0;
 		return _ret;
 	}
 
@@ -731,11 +737,15 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	 * f2 -> Expression()
 	 * f3 -> ";"
 	 */
+	public String leftid;
+	public boolean isAssignment=false;
 	public MyType visit(AssignmentStatement n) {
 		MyType _ret = null;
+		isAssignment=true;
 //		if(n.f2.f0.which==7){
 //			messagesendStack.push(n.f0.f0.tokenImage);
 //		}
+		leftid = n.f0.f0.tokenImage;
 		Env env = envStack.peek();
 		String id = n.f0.f0.tokenImage;
 		MyType mt = n.f2.accept(this);
@@ -752,8 +762,20 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 //		varTable.put(id, var);
 		Var var = varTable.get(id);
 		var.value = mt.value;
-		printAssignmentStatement(id, mt.vid);
+		if(n.f2.f0.which==8&&((PrimaryExpression)n.f2.f0.choice).f0.which==0){
+			printAssignmentStatement(id, mt.value);
+		}else if(n.f2.f0.which==8&&((PrimaryExpression)n.f2.f0.choice).f0.which==1){
+			printAssignmentStatement(id, 1);
+		}
+		else if(n.f2.f0.which==8&&((PrimaryExpression)n.f2.f0.choice).f0.which==2){
+			printAssignmentStatement(id, 0);
+		}
+		else{
+			printAssignmentStatement(id, mt.vid);
+		}
+
 		_ret = new MyType(var.vid, mt.f0, mt.value);
+		isAssignment=false;
 		return _ret;
 	}
 
@@ -806,7 +828,8 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		String baseAddressVid = varTable.get(identifier.getIdentifierName()).vid;
 		int index = e1.value;
 		String newVal = e2.vid;
-		String tmpVaporName = "classvar." + classvaroffset++;
+		//String tmpVaporName = "classvar." + classvaroffset++;
+		String tmpVaporName = "t."+classvaroffset++;
 		printer.println("s = [" +
 				baseAddressVid +
 				"]");
@@ -831,8 +854,9 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		printer.addIndentation();
 		printer.println("d = Add(" +
 				baseAddressVid + " o)");
-		printer.println("classvar." + classvaroffset + " = d + 4");
-		printer.println("[classvar." + classvaroffset++ + "] = " + newVal);
+		//printer.println("classvar." + classvaroffset + " = d + 4");
+		printer.println("t." + classvaroffset + " = d + 4");
+		printer.println("[t." + classvaroffset++ + "] = " + newVal);
 
 		printer.removeIndentation();
 
@@ -919,20 +943,26 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 			var.envid=envStack.peek().id;
 		}else{
 			switch(n.f0.f0.which){
-				case 0:
-					newvid = "array"+arrayvaroffset++;    // TODO: 2/12/2020 check other places
-					break;
-				case 1:
-					newvid = "boolean"+booleanvaroffset++;
-					break;
-				case 2:
-					newvid = "int"+intvaroffset++;
-					break;
+//				case 0:
+//					newvid = "array"+arrayvaroffset++;    // TODO: 2/12/2020 check other places
+//					break;
+//				case 1:
+//					newvid = "boolean"+booleanvaroffset++;
+//					break;
+//				case 2:
+//					newvid = "int"+intvaroffset++;
+//					break;
+//				case 3:
+//					newvid = "class"+classvaroffset++;
+//					break;
+//				default:
+//					newvid = "defaultatVarDeclaration";
 				case 3:
-					newvid = "class"+classvaroffset++;
+					newvid = "t."+classvaroffset++;
 					break;
 				default:
-					newvid = "defaultatVarDeclaration";
+					newvid = n.f1.f0.tokenImage;
+
 			}
 			Var var = new Var(n.f1.f0.tokenImage, newvid, type.f0, 0, envStack.peek().id);
 			//if(varTable.containsKey(n.f1.f0.tokenImage))	varTable.remove(n.f1.f0.tokenImage);
@@ -971,11 +1001,16 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	 */
 	@Override
 	public MyType visit(MessageSend n) {
+		boolean is = isAssignment;
 		parameterList.clear();
 		MyType classIdentifier = n.f0.accept(this);
+		printer.println("if "+classIdentifier.vid+" goto :null"+allocationNullOffset++);
+		printer.println("	Error(\"null pointer\")");
+		printer.println("null"+(allocationNullOffset-1)+":");
 		n.f1.accept(this);
 		n.f2.accept(this);
 		n.f3.accept(this);
+		isAssignment=false;
 		n.f4.accept(this);
 		n.f5.accept(this);
 		String className; //the caller Class
@@ -1002,7 +1037,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		if (isThisClass) {
 			storedVaporVar = "this";
 		} else if (classIdentifier.isFieldVar) {
-			String tmpVaporName = "classvar." + classvaroffset++;
+			String tmpVaporName = "t." + classvaroffset++;
 			printer.println(tmpVaporName + " = " + classIdentifier.vid);
 			storedVaporVar = tmpVaporName;
 		} else if (classIdentifier.vid != null) {
@@ -1013,7 +1048,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		}
 
 
-		String newClassVar = "classvar." + classvaroffset++;
+		String newClassVar = "t." + classvaroffset++;
 //		if(varTable.containsKey(classIdentifier.identifierName)){
 //			newClassVar = varTable.get(classIdentifier.identifierName).vid;
 //		}
@@ -1030,25 +1065,32 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 				"]");
 		String returnValueType = envTable.get(className).methodTable.get(methodId).returnValue.toString();
 		String returnValue;
-		switch (returnValueType) {
-			case "int":
-				returnValue = "intvar." + intvaroffset++;
-				break;
-			case "boolean":
-				returnValue = ("booleanvar." + booleanvaroffset++);
-				break;
-			case "int[]":
-				returnValue = ("arrayvar." + arrayvaroffset++);
-				break;
-			default:
-				returnValue = ("classvar." + classvaroffset++);
+		if(is){
+			returnValue = leftid;
+		}else{
+			returnValue = "t." + classvaroffset++;
 		}
+
+//		switch (returnValueType) {
+//			case "int":
+//				returnValue = "intvar." + intvaroffset++;
+//				break;
+//			case "boolean":
+//				returnValue = ("booleanvar." + booleanvaroffset++);
+//				break;
+//			case "int[]":
+//				returnValue = ("arrayvar." + arrayvaroffset++);
+//				break;
+//			default:
+//				returnValue = ("classvar." + classvaroffset++);
+
+//		}
 
 		StringBuilder parameterString = new StringBuilder();
 		for (MyType parameter : parameterList) {
 			parameterString.append(" ");
 			if (parameter.isFieldVar) {
-				String tmpVaporName = "classvar." + classvaroffset++;
+				String tmpVaporName = "t." + classvaroffset++;
 				printer.println(tmpVaporName + " = " + parameter.vid);
 				parameterString.append(tmpVaporName);
 			} else {
@@ -1117,7 +1159,6 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	public MyType visit(PrimaryExpression n) {
 		MyType _ret = n.f0.accept(this);
 		String vid = _ret.vid;
-		int value = _ret.value;
 		boolean isFieldVar = _ret.isFieldVar;
 		if (n.f0.which == 3) {
 			_ret = new MyType(((Identifier) n.f0.choice).f0.tokenImage);
@@ -1125,7 +1166,6 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 			//out.println(((Identifier)n.f0.choice).f0.tokenImage);
 			_ret.vid = vid;
 			_ret.isFieldVar = isFieldVar;
-			_ret.value = value;
 
 		}
 		if (n.f0.which == 8) {
@@ -1204,20 +1244,9 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
      */
     @Override
     public MyType visit(NotExpression n) {
-	    n.f0.accept(this);
-	    MyType _ret = n.f1.accept(this);
-	    if (_ret.value == 1) {
-		    _ret.value = 0;
-	    } else {
-		    _ret.value = 1;
-	    }
-	    String newVaporName = "booleanvar." + booleanvaroffset++;
-	    printer.println(newVaporName + " = Sub(" +
-			    1 +
-			    " " + _ret.vid + ")"
-	    );
-	    _ret.vid = newVaporName;
-	    return _ret;
+        n.f0.accept(this);
+        n.f1.accept(this);
+        return new MyType("boolean");
     }
 
     /**
@@ -1295,7 +1324,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		n.f3.accept(this);
 
 		String className = n.f1.f0.tokenImage;
-		String vaporName = "classvar." + classvaroffset++;
+		String vaporName = "t." + classvaroffset++;
 		int sizeWithTableHead = classSize.get(className) * 4 + 4;
 		printer.println(vaporName
 				+ " = HeapAllocZ(" +
@@ -1405,15 +1434,13 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
      */
     @Override
     public MyType visit(AndExpression n) {
-	    MyType t1 = n.f0.accept(this);
-	    n.f1.accept(this);
-	    MyType t2 = n.f2.accept(this);
-	    MyType _ret = new MyType("boolean");
-	    String tmpVar = "booleanvar." + booleanvaroffset++;
-	    printer.println(tmpVar + " = " + "MulS( " + t1.vid + " " + t2.vid + ")");
-	    _ret.vid = tmpVar;
-	    _ret.value = t1.value * t2.value;
-	    return _ret;
+        MyType t1 = n.f0.accept(this);
+        n.f1.accept(this);
+        MyType t2 = n.f2.accept(this);
+        MyType _ret = new MyType("boolean");
+        String tmpVar = "booleanvar."+booleanvaroffset++;
+		printer.println(tmpVar + " = " + "MulS( " + t1.vid+" "+ t2.vid+")");
+        return _ret;
     }
 
 
