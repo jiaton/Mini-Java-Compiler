@@ -449,7 +449,11 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 
 	public void printAssignmentStatement(String id, int value) {
 		Var var = varTable.get(id);
-		printer.println(var.vid + " = "+value);
+		if(var.fieldString!=null) {
+			printer.println(var.fieldString + " = " + value);
+		}else{
+			printer.println(var.vid+" = "+value);
+		}
 	}
 
 	public void printAssignmentStatement(String id, String vid) {
@@ -457,6 +461,8 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		//printer.println(var.jid + "=HeapAllocZ(4)");
 		if(var.fieldString!=null) {
 			printer.println(var.fieldString + " = " + vid);
+		}else{
+			printer.println(var.vid+" = "+vid);
 		}
 //		}else
 //		{
@@ -808,6 +814,8 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		}
 		else if(n.f2.f0.which==8&&((PrimaryExpression)n.f2.f0.choice).f0.which==2){
 			printAssignmentStatement(id, 0);
+		}else if(n.f2.f0.which==7){
+
 		}
 		else{
 			printAssignmentStatement(id, mt.vid);
@@ -864,8 +872,9 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		MyType identifier = n.f0.accept(this);
 		MyType e1 = n.f2.accept(this);
 		MyType e2 = n.f5.accept(this);
-		String baseAddressVid = varTable.get(identifier.getIdentifierName()).vid;
-		int index = e1.value;
+		//String baseAddressVid = varTable.get(identifier.getIdentifierName()).vid;
+		String baseAddressVid = identifier.vid;
+		String index = e1.vid;
 		String newVal = e2.vid;
 		//String tmpVaporName = "classvar." + classvaroffset++;
 		String tmpVaporName = "t."+classvaroffset++;
@@ -877,7 +886,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 				" " +
 				"s" +
 				")");
-		printer.println("if ok goto: notOut" + arrayLookupOffset);
+		printer.println("if ok goto :notOut" + arrayLookupOffset);
 		printer.println("Error(\"Array index out of bounds\")");
 		printer.println("notOut" + arrayLookupOffset++ + ": ok = Lts(" +
 				"-1 " +
@@ -894,8 +903,8 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		printer.println("d = Add(" +
 				baseAddressVid + " o)");
 		//printer.println("classvar." + classvaroffset + " = d + 4");
-		printer.println("t." + classvaroffset + " = d + 4");
-		printer.println("[t." + classvaroffset++ + "] = " + newVal);
+		printer.println("t." + classvaroffset + " = [d + 4]");
+		printer.println("t." + classvaroffset++ + " = " + newVal);
 
 		printer.removeIndentation();
 
@@ -1173,8 +1182,8 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	@Override
 	public MyType visit(ExpressionList n) {
 		MyType t = n.f0.accept(this);
-		n.f1.accept(this);
 		parameterList.add(t);
+		n.f1.accept(this);
 		return t;
 	}
 
@@ -1212,6 +1221,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		}else{
 			_ret = n.f0.accept(this);
 			String vid = _ret.vid;
+			int value = _ret.value;
 			boolean isFieldVar = _ret.isFieldVar;
 			if (n.f0.which == 3) {
 				_ret = new MyType(((Identifier) n.f0.choice).f0.tokenImage);
@@ -1219,7 +1229,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 				//out.println(((Identifier)n.f0.choice).f0.tokenImage);
 				_ret.vid = vid;
 				_ret.isFieldVar = isFieldVar;
-
+				_ret.value = value;
 			}
 		}
 		return _ret;
@@ -1270,19 +1280,22 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		n.f2.accept(this);
 		MyType t = n.f3.accept(this);
 		n.f4.accept(this);
-		int size = t.value;
+		String sizeStr = t.vid;
+
+		printer.println("intvar." + intvaroffset + " = " + "MulS(" + sizeStr + " 4)");
+		printer.println("allocSize = Add(intvar." + intvaroffset++ + " 4)");
 		String vaporName = "arrayvar." + arrayvaroffset++;
 		printer.println(vaporName + " = " +
 				"HeapAllocZ(" +
-				size * 4 + 4 +
+				"allocSize" +
 				")");
 		printer.println("[" +
 				vaporName +
 				"] = " +
-				size); //The base address' value will store the array size
+				sizeStr); //The base address' value will store the array size
 		MyType _ret = new MyType("int[]");
 		_ret.vid = vaporName;
-		_ret.value = size;
+		_ret.value = Integer.parseInt(sizeStr);
 		return _ret;
 	}
 
@@ -1294,9 +1307,20 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
      */
     @Override
     public MyType visit(NotExpression n) {
-        n.f0.accept(this);
-        n.f1.accept(this);
-        return new MyType("boolean");
+		n.f0.accept(this);
+		MyType _ret = n.f1.accept(this);
+		if (_ret.value == 1) {
+			_ret.value = 0;
+		} else {
+			_ret.value = 1;
+		}
+		String newVaporName = "booleanvar." + booleanvaroffset++;
+		printer.println(newVaporName + " = Sub(" +
+				1 +
+				" " + _ret.vid + ")"
+		);
+		_ret.vid = newVaporName;
+		return _ret;
     }
 
     /**
@@ -1339,8 +1363,14 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		Var var = varTable.get(n.f0.tokenImage);
 		if (var != null) {
 			if (var.isField) {
-				t.vid = var.fieldString;
-				t.isFieldVar = true;
+//				t.vid = var.fieldString;
+////				t.isFieldVar = true;
+				// TODO: 2/17/2020 don't understand
+				String tmpVaporName = "classvar." + classvaroffset++;
+				printer.println(tmpVaporName + " = " + var.fieldString);
+//				t.vid = var.fieldString;
+				t.vid = tmpVaporName;
+				t.isFieldVar = false; //changed true to false because we have already print new vaporName.
 			} else {
 				t.vid = var.vid;
 			}
@@ -1487,13 +1517,15 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
      */
     @Override
     public MyType visit(AndExpression n) {
-        MyType t1 = n.f0.accept(this);
-        n.f1.accept(this);
-        MyType t2 = n.f2.accept(this);
-        MyType _ret = new MyType("boolean");
-        String tmpVar = "booleanvar."+booleanvaroffset++;
-		printer.println(tmpVar + " = " + "MulS( " + t1.vid+" "+ t2.vid+")");
-        return _ret;
+		MyType t1 = n.f0.accept(this);
+		n.f1.accept(this);
+		MyType t2 = n.f2.accept(this);
+		MyType _ret = new MyType("boolean");
+		String tmpVar = "booleanvar." + booleanvaroffset++;
+		printer.println(tmpVar + " = " + "MulS( " + t1.vid + " " + t2.vid + ")");
+		_ret.vid = tmpVar;
+		_ret.value = t1.value * t2.value;
+		return _ret;
     }
 
 
@@ -1608,7 +1640,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		MyType t1 = n.f0.accept(this);
 		n.f1.accept(this);
 		MyType t2 = n.f2.accept(this);
-		int index = t2.value;
+		String index = t2.vid;
 		n.f3.accept(this);
 	    String baseAddressOfArray = t1.vid;
 	    String size = "intvar." + intvaroffset++;
