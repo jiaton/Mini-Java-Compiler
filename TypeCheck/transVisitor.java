@@ -1115,23 +1115,22 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	 */
 	@Override
 	public MyType visit(PrimaryExpression n) {
-		MyType _ret = n.f0.accept(this);
-		String vid = _ret.vid;
-		int value = _ret.value;
-		boolean isFieldVar = _ret.isFieldVar;
-		if (n.f0.which == 3) {
-			_ret = new MyType(((Identifier) n.f0.choice).f0.tokenImage);
-			_ret.identifierName = ((Identifier) n.f0.choice).f0.tokenImage;
-			//out.println(((Identifier)n.f0.choice).f0.tokenImage);
-			_ret.vid = vid;
-			_ret.isFieldVar = isFieldVar;
-			_ret.value = value;
-
-		}
+		MyType _ret;
 		if (n.f0.which == 8) {
 			_ret = ((BracketExpression) n.f0.choice).f1.accept(this);
-		}
+		}else{
+			_ret = n.f0.accept(this);
+			String vid = _ret.vid;
+			boolean isFieldVar = _ret.isFieldVar;
+			if (n.f0.which == 3) {
+				_ret = new MyType(((Identifier) n.f0.choice).f0.tokenImage);
+				_ret.identifierName = ((Identifier) n.f0.choice).f0.tokenImage;
+				//out.println(((Identifier)n.f0.choice).f0.tokenImage);
+				_ret.vid = vid;
+				_ret.isFieldVar = isFieldVar;
 
+			}
+		}
 		return _ret;
 	}
 
