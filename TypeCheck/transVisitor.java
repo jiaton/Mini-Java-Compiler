@@ -1117,6 +1117,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	public MyType visit(PrimaryExpression n) {
 		MyType _ret = n.f0.accept(this);
 		String vid = _ret.vid;
+		int value = _ret.value;
 		boolean isFieldVar = _ret.isFieldVar;
 		if (n.f0.which == 3) {
 			_ret = new MyType(((Identifier) n.f0.choice).f0.tokenImage);
@@ -1124,6 +1125,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 			//out.println(((Identifier)n.f0.choice).f0.tokenImage);
 			_ret.vid = vid;
 			_ret.isFieldVar = isFieldVar;
+			_ret.value = value;
 
 		}
 		if (n.f0.which == 8) {
@@ -1202,9 +1204,20 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
      */
     @Override
     public MyType visit(NotExpression n) {
-        n.f0.accept(this);
-        n.f1.accept(this);
-        return new MyType("boolean");
+	    n.f0.accept(this);
+	    MyType _ret = n.f1.accept(this);
+	    if (_ret.value == 1) {
+		    _ret.value = 0;
+	    } else {
+		    _ret.value = 1;
+	    }
+	    String newVaporName = "booleanvar." + booleanvaroffset++;
+	    printer.println(newVaporName + " = Sub(" +
+			    1 +
+			    " " + _ret.vid + ")"
+	    );
+	    _ret.vid = newVaporName;
+	    return _ret;
     }
 
     /**
@@ -1392,13 +1405,15 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
      */
     @Override
     public MyType visit(AndExpression n) {
-        MyType t1 = n.f0.accept(this);
-        n.f1.accept(this);
-        MyType t2 = n.f2.accept(this);
-        MyType _ret = new MyType("boolean");
-        String tmpVar = "booleanvar."+booleanvaroffset++;
-		printer.println(tmpVar + " = " + "MulS( " + t1.vid+" "+ t2.vid+")");
-        return _ret;
+	    MyType t1 = n.f0.accept(this);
+	    n.f1.accept(this);
+	    MyType t2 = n.f2.accept(this);
+	    MyType _ret = new MyType("boolean");
+	    String tmpVar = "booleanvar." + booleanvaroffset++;
+	    printer.println(tmpVar + " = " + "MulS( " + t1.vid + " " + t2.vid + ")");
+	    _ret.vid = tmpVar;
+	    _ret.value = t1.value * t2.value;
+	    return _ret;
     }
 
 
