@@ -803,8 +803,9 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		MyType identifier = n.f0.accept(this);
 		MyType e1 = n.f2.accept(this);
 		MyType e2 = n.f5.accept(this);
-		String baseAddressVid = varTable.get(identifier.getIdentifierName()).vid;
-		int index = e1.value;
+//		String baseAddressVid = varTable.get(identifier.getIdentifierName()).vid;
+		String baseAddressVid = identifier.vid;
+		String index = e1.vid;
 		String newVal = e2.vid;
 		String tmpVaporName = "classvar." + classvaroffset++;
 		printer.println("s = [" +
@@ -815,9 +816,9 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 				" " +
 				"s" +
 				")");
-		printer.println("if ok goto: notOut" + arrayLookupOffset);
+		printer.println("if ok goto :notOut" + arrayLookupOffset);
 		printer.println("Error(\"Array index out of bounds\")");
-		printer.println("notOut" + arrayLookupOffset++ + ": ok = Lts(" +
+		printer.println("notOut" + arrayLookupOffset++ + ": ok = LtS(" +
 				"-1 " +
 				" " +
 				index +
@@ -831,8 +832,8 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		printer.addIndentation();
 		printer.println("d = Add(" +
 				baseAddressVid + " o)");
-		printer.println("classvar." + classvaroffset + " = d + 4");
-		printer.println("[classvar." + classvaroffset++ + "] = " + newVal);
+		printer.println("classvar." + classvaroffset + " = [d + 4]");
+		printer.println("classvar." + classvaroffset++ + " = " + newVal);
 
 		printer.removeIndentation();
 
@@ -1082,8 +1083,8 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	@Override
 	public MyType visit(ExpressionList n) {
 		MyType t = n.f0.accept(this);
-		n.f1.accept(this);
 		parameterList.add(t);
+		n.f1.accept(this);
 		return t;
 	}
 
@@ -1174,26 +1175,29 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
      */
     @Override
     public MyType visit(ArrayAllocationExpression n) {
-		n.f0.accept(this);
-		n.f1.accept(this);
-		n.f2.accept(this);
-		MyType t = n.f3.accept(this);
-		n.f4.accept(this);
-		int size = t.value;
-		String vaporName = "arrayvar." + arrayvaroffset++;
-		printer.println(vaporName + " = " +
-				"HeapAllocZ(" +
-				size * 4 + 4 +
-				")");
-		printer.println("[" +
-				vaporName +
-				"] = " +
-				size); //The base address' value will store the array size
-		MyType _ret = new MyType("int[]");
-		_ret.vid = vaporName;
-		_ret.value = size;
-		return _ret;
-	}
+	    n.f0.accept(this);
+	    n.f1.accept(this);
+	    n.f2.accept(this);
+	    MyType t = n.f3.accept(this);
+	    n.f4.accept(this);
+	    String sizeStr = t.vid;
+
+	    printer.println("intvar." + intvaroffset + " = " + "MulS(" + sizeStr + " 4)");
+	    printer.println("allocSize = Add(intvar." + intvaroffset++ + " 4)");
+	    String vaporName = "arrayvar." + arrayvaroffset++;
+	    printer.println(vaporName + " = " +
+			    "HeapAllocZ(" +
+			    "allocSize" +
+			    ")");
+	    printer.println("[" +
+			    vaporName +
+			    "] = " +
+			    sizeStr); //The base address' value will store the array size
+	    MyType _ret = new MyType("int[]");
+	    _ret.vid = vaporName;
+	    _ret.value = Integer.parseInt(sizeStr);
+	    return _ret;
+    }
 
     /**
      * f0 -> "!"
@@ -1259,8 +1263,11 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		Var var = varTable.get(n.f0.tokenImage);
 		if (var != null) {
 			if (var.isField) {
-				t.vid = var.fieldString;
-				t.isFieldVar = true;
+				String tmpVaporName = "classvar." + classvaroffset++;
+				printer.println(tmpVaporName + " = " + var.fieldString);
+//				t.vid = var.fieldString;
+				t.vid = tmpVaporName;
+				t.isFieldVar = false; //changed true to false because we have already print new vaporName.
 			} else {
 				t.vid = var.vid;
 			}
@@ -1523,12 +1530,12 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
      */
     @Override
     public MyType visit(ArrayLookup n) {
-		MyType _ret = null;
-		MyType t1 = n.f0.accept(this);
-		n.f1.accept(this);
-		MyType t2 = n.f2.accept(this);
-		int index = t2.value;
-		n.f3.accept(this);
+	    MyType _ret = null;
+	    MyType t1 = n.f0.accept(this);
+	    n.f1.accept(this);
+	    MyType t2 = n.f2.accept(this);
+	    String index = t2.vid;
+	    n.f3.accept(this);
 	    String baseAddressOfArray = t1.vid;
 	    String size = "intvar." + intvaroffset++;
 	    printer.println(size + " = " + "[" +
