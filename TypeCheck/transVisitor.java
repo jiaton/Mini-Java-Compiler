@@ -1016,9 +1016,9 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 //			newClassVar = varTable.get(classIdentifier.identifierName).vid;
 //		}
 		printer.println(newClassVar + " = " +
-
-				storedVaporVar
-		);
+				"[" +
+				storedVaporVar +
+				"]");
 		printer.println(newClassVar + " = " +
 				"[" +
 				newClassVar +
