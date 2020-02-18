@@ -487,6 +487,10 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	}
 
 
+
+
+
+
 	/**
 	 * f0 -> MainClass()
 	 * f1 -> ( TypeDeclaration() )*
@@ -592,7 +596,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		Env env = envTable.get(n.f1.f0.tokenImage);
 		envStack.push(env);
 		n.f0.accept(this);
-		n.f1.accept(this);
+		//n.f1.accept(this);
 		n.f2.accept(this);
 		n.f3.accept(this);
 		n.f4.accept(this);
@@ -823,12 +827,15 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		}else if(n.f2.f0.which==7){
 
 		}
-		else if(n.f2.f0.which==8&&((PrimaryExpression)n.f2.f0.choice).f0.which==3){
+		else if(n.f2.f0.which==8){
 			printAssignmentStatement(id, mt.vid);
 		}
-		else if(n.f2.f0.which==8&&((PrimaryExpression)n.f2.f0.choice).f0.which==5){
-			printAssignmentStatement(id, mt.vid);
-		}
+//		else if(n.f2.f0.which==8&&((PrimaryExpression)n.f2.f0.choice).f0.which==3){
+//			printAssignmentStatement(id, mt.vid);
+//		}
+//		else if(n.f2.f0.which==8&&((PrimaryExpression)n.f2.f0.choice).f0.which==5){
+//			printAssignmentStatement(id, mt.vid);
+//		}
 
 		_ret = new MyType(var.vid, mt.f0, mt.value);
 		isAssignment=false;
@@ -877,12 +884,13 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	 * f6 -> ";"
 	 */
 	public MyType visit(ArrayAssignmentStatement n) {
-
+		boolean is = isInOther;
 		MyType _ret = null;
 		//MyType identifier = n.f0.accept(this);
-
+		isInOther = true;
 		MyType e1 = n.f2.accept(this);
-
+		if(!is)
+		isInOther = false;
 		String leftvid;
 		if(varTable.containsKey(n.f0.f0.tokenImage)&&varTable.get(n.f0.f0.tokenImage).fieldString!=null){
 			leftvid = varTable.get(n.f0.f0.tokenImage).fieldString;
@@ -910,9 +918,9 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		printer.println("null"+(allocationNullOffset-1)+":");
 		printer.println(tmp2+" = MulS("+e1.vid+" 4"+")");
 		printer.println(tmp2+" = Add("+tmp2+" "+tmpVaporName+")");
-
+		isInOther=true;
 		MyType e2 = n.f5.accept(this);
-
+		isInOther=false;
 
 
 		String newVal = e2.vid;
@@ -963,7 +971,9 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	 */
 	public MyType visit(IfStatement n) {
 		MyType _ret = null;
+		isInOther=true;
 		MyType e = n.f2.accept(this);
+		isInOther=false;
 		String elselabel = "elsebranch" + iflabeloffset;
 		String labels2 = "end_if" + iflabeloffset++;
 		printer.println("if0 " + e.vid + " goto :" + elselabel);
@@ -987,12 +997,16 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	 * f4 -> Statement()
 	 */
 	public MyType visit(WhileStatement n) {
+		boolean is = isInOther;
 		MyType _ret = null;
 		String labeltrue = "whiletrue" + whilelabeloffset;
 		String labelfalse = "whilefalse" + whilelabeloffset++;
 		printer.println(labeltrue + ":");
 		printer.addIndentation();
+		isInOther = true;
 		MyType e = n.f2.accept(this);
+		if(!is)
+		isInOther = false;
 		printer.println("if0 " + e.vid + " goto :" + labelfalse);
 		printer.removeIndentation();
 		n.f4.accept(this);
@@ -1010,7 +1024,9 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	 */
 	public MyType visit(PrintStatement n) {
 		MyType _ret = null;
+		isInOther = true;
 		MyType e = n.f2.accept(this);
+		isInOther=false;
 		printer.println("PrintIntS(" + e.vid + ")");
 		return _ret;
 	}
@@ -1088,7 +1104,6 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	public MyType visit(Expression n) {
 		return n.f0.accept(this);
 	}
-
 	/**
 	 * f0 -> PrimaryExpression()
 	 * f1 -> "."
@@ -1099,15 +1114,20 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	 */
 	@Override
 	public MyType visit(MessageSend n) {
-		boolean is = isAssignment;
+		boolean is = isInOther;
+		isInOther=true;
 		parameterList.clear();
+		isInOther = true;
 		MyType classIdentifier = n.f0.accept(this);
+		if(!is)
+		isInOther = false;
 		printer.println("if "+classIdentifier.vid+" goto :null"+allocationNullOffset++);
 		printer.println("	Error(\"null pointer\")");
 		printer.println("null"+(allocationNullOffset-1)+":");
 		n.f1.accept(this);
 		n.f2.accept(this);
 		n.f3.accept(this);
+		isInOther=false;
 		String className; //the caller Class
 		Boolean isThisClass = false;
 
@@ -1158,13 +1178,15 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 				methodOffset * 4
 				+
 				"]");
-		isAssignment=false;
+		isInOther = true;
 		n.f4.accept(this);
+		if(!is)
+		isInOther = false;
 		n.f5.accept(this);
 
 		String returnValueType = envTable.get(className).methodTable.get(methodId).returnValue.toString();
 		String returnValue;
-		if(is){
+		if(isAssignment&&!isInOther){
 			returnValue = leftid;
 		}else{
 			returnValue = "t." + classvaroffset++;
@@ -1211,6 +1233,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		myType_ret.vid = returnValue;
 //		if(!messagesendStack.isEmpty())
 //			myType_ret.identifierName=messagesendStack.pop();
+		isInOther=false;
 		return myType_ret;
 	}
 //	public Stack<String> messagesendStack=new Stack<>();
@@ -1222,9 +1245,16 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	 */
 	@Override
 	public MyType visit(ExpressionList n) {
+		boolean is = isInOther;
+		isInOther = true;
 		MyType t = n.f0.accept(this);
+		if(!is)
+		isInOther = false;
 		parameterList.add(t);
+		isInOther = true;
 		n.f1.accept(this);
+		if(!is)
+		isInOther = false;
 		return t;
 	}
 
@@ -1316,10 +1346,14 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
      */
     @Override
     public MyType visit(ArrayAllocationExpression n) {
+		boolean is = isInOther;
 		n.f0.accept(this);
 		n.f1.accept(this);
 		n.f2.accept(this);
+		isInOther = true;
 		MyType t = n.f3.accept(this);
+		if(!is)
+		isInOther = false;
 		n.f4.accept(this);
 		String sizeStr = t.vid;
 
@@ -1358,8 +1392,12 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
      */
     @Override
     public MyType visit(NotExpression n) {
+		boolean is = isInOther;
 		n.f0.accept(this);
+		isInOther = true;
 		MyType _ret = n.f1.accept(this);
+		if(!is)
+		isInOther = false;
 		if (_ret.value == 1) {
 			_ret.value = 0;
 		} else {
@@ -1383,8 +1421,12 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
      */
     @Override
     public MyType visit(BracketExpression n) {
+		boolean is = isInOther;
         n.f0.accept(this);
+		isInOther = true;
         MyType t = n.f1.accept(this);
+        if(!is)
+		isInOther = false;
         n.f2.accept(this);
         return t;
     }
@@ -1559,6 +1601,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		return new MyType("int");
 	}
 
+	boolean isInOther = false;
     /**
      * f0 -> PrimaryExpression()
      * f1 -> "&&"
@@ -1568,12 +1611,19 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
      */
     @Override
     public MyType visit(AndExpression n) {
+		boolean is = isInOther;
+		isInOther = true;
 		MyType t1 = n.f0.accept(this);
+		if(!is)
+		isInOther = false;
 		n.f1.accept(this);
+		isInOther = true;
 		MyType t2 = n.f2.accept(this);
+		if(!is)
+		isInOther = false;
 		MyType _ret = new MyType("boolean");
 		String tmpVar;
-		if(isAssignment){
+		if(isAssignment&&!isInOther){
 			tmpVar = leftid;
 		}else{
 			tmpVar = "t."+ classvaroffset++;
@@ -1595,12 +1645,20 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	 */
 	@Override
 	public MyType visit(CompareExpression n) {
+		boolean is = isInOther;
+
 		MyType _ret;
+		isInOther = true;
 		MyType t1 = n.f0.accept(this);
+		if(!is)
+		isInOther = false;
 		n.f1.accept(this);
+		isInOther = true;
 		MyType t2 = n.f2.accept(this);
+		if(!is)
+		isInOther = false;
 		String tmpVar;
-		if(isAssignment){
+		if(isAssignment&&!isInOther){
 			tmpVar = leftid;
 		}else{
 			tmpVar = "t."+ classvaroffset++;
@@ -1623,12 +1681,19 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
      */
     @Override
     public MyType visit(PlusExpression n) {
+		boolean is = isInOther;
         MyType _ret=null;
+		isInOther = true;
         MyType t1 = n.f0.accept(this);
+        if(!is)
+		isInOther = false;
         n.f1.accept(this);
+		isInOther = true;
         MyType t2 = n.f2.accept(this);
+        if(!is)
+		isInOther = false;
 		String tmpVar;
-		if(isAssignment){
+		if(isAssignment&&!isInOther){
         	tmpVar = leftid;
 		}else{
 			tmpVar = "t."+ classvaroffset++;
@@ -1652,12 +1717,19 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
      */
     @Override
     public MyType visit(MinusExpression n) {
+		boolean is = isInOther;
         MyType _ret=null;
+		isInOther = true;
         MyType t1 = n.f0.accept(this);
+        if(!is)
+		isInOther = false;
         n.f1.accept(this);
+		isInOther = true;
         MyType t2 = n.f2.accept(this);
+        if(!is)
+		isInOther = false;
 		String tmpVar;
-		if(isAssignment){
+		if(isAssignment&&!isInOther){
 			tmpVar = leftid;
 		}else{
 			tmpVar = "t."+ classvaroffset++;
@@ -1682,18 +1754,25 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
     @Override
     public MyType visit(TimesExpression n) {
         MyType _ret=null;
+		boolean is = isInOther;
+		isInOther = true;
         MyType t1 = n.f0.accept(this);
+        if(!is)
+		isInOther = false;
         n.f1.accept(this);
+		isInOther = true;
         MyType t2 = n.f2.accept(this);
+        if(!is)
+		isInOther = false;
 		String tmpVar;
-		if(isAssignment){
+		if(isAssignment&&!isInOther){
 			tmpVar = leftid;
 		}else{
 			tmpVar = "t."+ classvaroffset++;
 		}
         _ret = new MyType("int");
         _ret.vid = tmpVar;
-		printer.println(tmpVar + " = Mul(" +
+		printer.println(tmpVar + " = MulS(" +
 				t1.vid +
 				" " +
 				t2.vid +
@@ -1712,9 +1791,16 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
     @Override
     public MyType visit(ArrayLookup n) {
 		MyType _ret = null;
+		boolean is = isInOther;
+		isInOther = true;
 		MyType t1 = n.f0.accept(this);
+		if(!is)
+		isInOther = false;
 		n.f1.accept(this);
+		isInOther = true;
 		MyType t2 = n.f2.accept(this);
+		if(!is)
+		isInOther = false;
 		String index = t2.vid;
 		n.f3.accept(this);
 	    String baseAddressOfArray = t1.vid;
@@ -1744,7 +1830,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 				" "+baseAddressOfArray+")"
 		);
 		String receiverVid;
-		if(isAssignment){
+		if(isAssignment&&!isInOther){
 			receiverVid= leftid;
 		}else{
 			receiverVid="t."+classvaroffset++;
@@ -1767,7 +1853,11 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	@Override
 	public MyType visit(ArrayLength n) {
 		MyType _ret = null;
+		boolean is = isInOther;
+		isInOther = true;
 		MyType t = n.f0.accept(this);
+		if(!is)
+		isInOther = false;
 		n.f1.accept(this);
 		n.f2.accept(this);
 		String baseAddress = t.vid;
