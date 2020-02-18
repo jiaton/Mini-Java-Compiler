@@ -99,6 +99,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	public void setField(VarDeclaration n, int offset, Env env) {
 		String name = n.f1.f0.tokenImage;
 		env.record.put(name, offset);
+		//out.println("put "+name+" "+offset+ " to "+env.id);
 	}
 
 	public void setMethod(MethodDeclaration n, int offset, Env env) {
@@ -135,6 +136,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		int max = 0;
 		for (Map.Entry<String, Integer> entry : superEnv.record.entrySet()) {
 			subEnv.record.put(entry.getKey(), entry.getValue());
+			//out.println("put "+entry.getKey()+" "+entry.getValue()+ " to "+subclass);
 			if (entry.getValue() > max) {
 				max = entry.getValue();
 			}
@@ -449,7 +451,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 
 	public void printAssignmentStatement(String id, int value) {
 		Var var = varTable.get(id);
-		if(var.fieldString!=null) {
+		if(var.isField) {
 			printer.println(var.fieldString + " = " + value);
 		}else{
 			printer.println(var.vid+" = "+value);
@@ -459,7 +461,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	public void printAssignmentStatement(String id, String vid) {
 		Var var = varTable.get(id);
 		//printer.println(var.jid + "=HeapAllocZ(4)");
-		if(var.fieldString!=null) {
+		if(var.isField) {
 			printer.println(var.fieldString + " = " + vid);
 		}else{
 			printer.println(var.vid+" = "+vid);
@@ -482,6 +484,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 			int positionInRecord = classenv.record.get(entry.getKey());
 ////			String newReturnVaporName = var.vid;
 ////			printer.println(newReturnVaporName+" = " + "[this+" + ((positionInRecord * 4) +4)+"]");
+			var.isField = true;
 			var.fieldString="[this+" + ((positionInRecord * 4) +4)+"]";
 		}
 	}
@@ -647,6 +650,9 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	 * f12 -> "}"
 	 */
 	public MyType visit(MethodDeclaration n) {
+		for(int d = printer.numberOfIndentation; d>0;d--){
+			printer.removeIndentation();
+		}
 		MyType _ret = null;
 		classvaroffset = 0;
 		Env classenv = envStack.peek();
@@ -817,6 +823,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 //		varTable.put(id, var);
 		Var var = varTable.get(id);
 		var.value = mt.value;
+		String newvid;
 		if(n.f2.f0.which==8&&((PrimaryExpression)n.f2.f0.choice).f0.which==0){
 			printAssignmentStatement(id, mt.value);
 		}else if(n.f2.f0.which==8&&((PrimaryExpression)n.f2.f0.choice).f0.which==1){
@@ -892,7 +899,7 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		if(!is)
 		isInOther = false;
 		String leftvid;
-		if(varTable.containsKey(n.f0.f0.tokenImage)&&varTable.get(n.f0.f0.tokenImage).fieldString!=null){
+		if(varTable.containsKey(n.f0.f0.tokenImage)&&varTable.get(n.f0.f0.tokenImage).isField){
 			leftvid = varTable.get(n.f0.f0.tokenImage).fieldString;
 		}else if(varTable.containsKey(n.f0.f0.tokenImage)){
 			leftvid = varTable.get(n.f0.f0.tokenImage).vid;
@@ -980,10 +987,12 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		printer.addIndentation();
 		n.f4.accept(this);
 		printer.println("goto :" + labels2);
-		printer.println(elselabel + ":");
-		n.f6.accept(this);
 		printer.removeIndentation();
+		printer.println(elselabel + ":");
 		printer.addIndentation();
+		n.f6.accept(this);
+//		printer.removeIndentation();
+//		printer.addIndentation();
 		printer.removeIndentation();
 		printer.println(labels2 + ":");
 		return _ret;
@@ -1008,8 +1017,9 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		if(!is)
 		isInOther = false;
 		printer.println("if0 " + e.vid + " goto :" + labelfalse);
-		printer.removeIndentation();
+		printer.addIndentation();
 		n.f4.accept(this);
+		printer.removeIndentation();
 		printer.println("goto :" + labeltrue);
 		printer.println(labelfalse + ":");
 		return _ret;
@@ -1186,9 +1196,15 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 
 		String returnValueType = envTable.get(className).methodTable.get(methodId).returnValue.toString();
 		String returnValue;
-		if(isAssignment&&!isInOther){
+		boolean b = false;
+		if(isAssignment&&!isInOther&&!varTable.get(leftid).isField){
 			returnValue = leftid;
-		}else{
+		}
+		else if(isAssignment&&!isInOther&&varTable.get(leftid).isField){
+			b = true;
+			returnValue = "t." + classvaroffset++;
+		}
+		else{
 			returnValue = "t." + classvaroffset++;
 		}
 
@@ -1229,6 +1245,9 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 				storedVaporVar +
 				" " + parameterString +
 				")");
+		if(b){
+			printer.println(varTable.get(leftid).fieldString+ " = " + returnValue);
+		}
 		MyType myType_ret = new MyType(returnValueType);
 		myType_ret.vid = returnValue;
 //		if(!messagesendStack.isEmpty())
@@ -1611,25 +1630,37 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
      */
     @Override
     public MyType visit(AndExpression n) {
+    	String temp = "t."+classvaroffset++;
 		boolean is = isInOther;
 		isInOther = true;
 		MyType t1 = n.f0.accept(this);
 		if(!is)
 		isInOther = false;
+		String label = ""+iflabeloffset++;
+		printer.println("if0 "+t1.vid+" goto :else"+label);
+		printer.addIndentation();
 		n.f1.accept(this);
 		isInOther = true;
 		MyType t2 = n.f2.accept(this);
 		if(!is)
 		isInOther = false;
+		printer.println(temp+" = "+t2.vid);
+		printer.println("goto :end"+label);
+		printer.removeIndentation();
+		printer.println("else"+label+":");
+		printer.addIndentation();
+		printer.println(temp+" = 0");
+		printer.removeIndentation();
+		printer.println("end"+label+":");
 		MyType _ret = new MyType("boolean");
-		String tmpVar;
-		if(isAssignment&&!isInOther){
-			tmpVar = leftid;
-		}else{
-			tmpVar = "t."+ classvaroffset++;
-		}
-		printer.println(tmpVar + " = " + "MulS( " + t1.vid + " " + t2.vid + ")");
-		_ret.vid = tmpVar;
+//		String tmpVar;
+//		if(isAssignment&&!isInOther){
+//			tmpVar = leftid;
+//		}else{
+//			tmpVar = "t."+ classvaroffset++;
+//		}
+//		printer.println(tmpVar + " = " + "MulS( " + t1.vid + " " + t2.vid + ")");
+		_ret.vid = temp;
 		_ret.value = t1.value * t2.value;
 		return _ret;
     }
