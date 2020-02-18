@@ -118,15 +118,37 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 	}
 
 	public int setExtendsMethod(MethodDeclaration n, int offset, Env env) {
-		String name = env.id + "." + n.f2.f0.tokenImage;
-		if (env.vtable.containsKey(name)) {
-			env.vtableDelete(name);
-			env.vtable.put(name, offset);
-			return ++offset;
-		} else {
-			env.vtable.put(name, offset);
-			return ++offset;
+		String superclass = env.superClass;
+		while(superclass!=null){
+			Env sup = envTable.get(superclass);
+//			out.println(sup.id);
+//			for(Map.Entry<String, Integer> entry : sup.vtable.entrySet()){
+//				if(entry.getKey()==sup.id+"." + n.f2.f0.tokenImage){
+//					if(env.vtable.containsKey(sup.id+"." + n.f2.f0.tokenImage)){
+//						env.vtableDelete(sup.id+"." + n.f2.f0.tokenImage);
+//						env.vtable.put(env.id + "." + n.f2.f0.tokenImage,offset);
+//						return ++offset;
+//					}
+//				}
+//			}
+			if(env.vtable.containsKey(superclass+"." + n.f2.f0.tokenImage)){
+				env.vtableDelete(superclass+"." + n.f2.f0.tokenImage);
+				offset--;
+			}
+
+			superclass = sup.superClass;
 		}
+		env.vtable.put(env.id + "." + n.f2.f0.tokenImage, offset);
+		return ++offset;
+//		String name = env.id + "." + n.f2.f0.tokenImage;
+//		if (env.vtable.containsKey(name)) {
+//			env.vtableDelete(name);
+//			env.vtable.put(name, offset);
+//			return ++offset;
+//		} else {
+//			env.vtable.put(name, offset);
+//			return ++offset;
+//		}
 	}
 
 	public int setBasicField(ClassExtendsDeclaration n, Env subEnv) {
@@ -914,15 +936,15 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		//String tmpVaporName = "classvar." + classvaroffset++;
 		String tmpVaporName = "t."+classvaroffset++;
 		printer.println(tmpVaporName + " = "+ leftvid);
-		printer.println("if "+tmpVaporName+" goto :null"+allocationNullOffset++);
-		printer.println("	Error(\"null pointer\")");
-		printer.println("null"+(allocationNullOffset-1)+":");
+		printer.println("if "+tmpVaporName+" goto :Null"+allocationNullOffset++);
+		printer.println("	Error(\"Null pointer\")");
+		printer.println("Null"+(allocationNullOffset-1)+":");
 		String tmp2 = "t."+classvaroffset++;
 		printer.println(tmp2+" = ["+tmpVaporName+"]");
 		printer.println(tmp2+" = Lt("+e1.vid+" "+tmp2+")");
-		printer.println("if "+tmp2+" goto :null"+allocationNullOffset++);
+		printer.println("if "+tmp2+" goto :Null"+allocationNullOffset++);
 		printer.println("	Error(\"array index out of bounds\")");
-		printer.println("null"+(allocationNullOffset-1)+":");
+		printer.println("Null"+(allocationNullOffset-1)+":");
 		printer.println(tmp2+" = MulS("+e1.vid+" 4"+")");
 		printer.println(tmp2+" = Add("+tmp2+" "+tmpVaporName+")");
 		isInOther=true;
@@ -1131,9 +1153,9 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		MyType classIdentifier = n.f0.accept(this);
 		if(!is)
 		isInOther = false;
-		printer.println("if "+classIdentifier.vid+" goto :null"+allocationNullOffset++);
-		printer.println("	Error(\"null pointer\")");
-		printer.println("null"+(allocationNullOffset-1)+":");
+		printer.println("if "+classIdentifier.vid+" goto :Null"+allocationNullOffset++);
+		printer.println("	Error(\"Null pointer\")");
+		printer.println("Null"+(allocationNullOffset-1)+":");
 		n.f1.accept(this);
 		n.f2.accept(this);
 		n.f3.accept(this);
@@ -1835,9 +1857,9 @@ public class transVisitor extends GJNoArguDepthFirst<MyType> {
 		String index = t2.vid;
 		n.f3.accept(this);
 	    String baseAddressOfArray = t1.vid;
-		printer.println("if "+t1.vid+" goto :null" + allocationNullOffset);
-		printer.println("Error(\"null pointer\")");
-		printer.println("null" + allocationNullOffset++ + ":");
+		printer.println("if "+t1.vid+" goto :Null" + allocationNullOffset);
+		printer.println("Error(\"Null pointer\")");
+		printer.println("Null" + allocationNullOffset++ + ":");
 
 	    String size = "t." + classvaroffset++;
 	    printer.println(size + " = " + "[" +
