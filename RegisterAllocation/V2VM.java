@@ -7,10 +7,7 @@ import cs132.vapor.ast.VaporProgram;
 import cs132.vapor.ast.VBuiltIn.Op;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import RegisterAllocation.*;
 
@@ -125,9 +122,25 @@ public class V2VM {
                 System.out.println("------------------------");
             }
 
-//            System.out.println("DFG of "+function.ident+":");
-//            graph.DFG.print();
-//            System.out.println("-------------------------");
+            /*generate intervals*/
+            HashMap<String,SourcePos[]> start = new HashMap<>();
+            for(Map.Entry<String, Node> entry : graph.DFG.nodes.entrySet()){
+                Node thisnode = entry.getValue();
+                for(String str : thisnode.sets.active){
+                    if(!start.containsKey(str)){
+                        SourcePos[] sp = {thisnode.sourcePos,thisnode.sourcePos};
+                        start.put(str, sp);
+                    }
+                    else{
+                        start.get(str)[1]=thisnode.sourcePos;
+                    }
+                }
+                for(Map.Entry<String,SourcePos[]> e : start.entrySet()){
+                    if(!thisnode.sets.active.contains(e.getKey())){
+                        Interval interval = new Interval(e.getValue()[0],e.getValue()[1]);
+                    }
+                }
+            }
         }
 
 
