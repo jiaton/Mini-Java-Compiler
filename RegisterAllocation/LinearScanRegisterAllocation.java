@@ -13,6 +13,11 @@ public class LinearScanRegisterAllocation {
 
     public LinearScanRegisterAllocation(TreeSet<Interval.CandidateInterval> candidateInvervals) {
         this.candidateInvervals = candidateInvervals;
+        for (int i = 0; i < 8; i++) {
+            freeRegisterPool.add(new Register("$s" + i));
+            freeRegisterPool.add(new Register("$t" + i));
+        }
+        freeRegisterPool.add(new Register("$t8"));
     }
 
     private Register allocateANewRegister() {
@@ -30,7 +35,8 @@ public class LinearScanRegisterAllocation {
             if (j.end.line > interval.start.line) {
                 return;
             }
-            active.remove(j);
+            freeRegisterPool.add(allocationRecord.get(j));
+            iterator.remove();
         }
     }
 
@@ -40,7 +46,7 @@ public class LinearScanRegisterAllocation {
             allocationRecord.put(interval, allocationRecord.get(spill));
             local.put(spill, locaStackIndex++);
             active.remove(spill);
-            active.add((Interval.ActiveInterval) interval);
+            active.add(new Interval.ActiveInterval(interval));
         } else {
             local.put(interval, locaStackIndex++);
         }
@@ -55,7 +61,7 @@ public class LinearScanRegisterAllocation {
                 spillAtInterval(i);
             } else { // No need to spill
                 allocationRecord.put(i, allocateANewRegister());
-                active.add((Interval.ActiveInterval) i);
+                active.add(new Interval.ActiveInterval(i));
             }
 
         }

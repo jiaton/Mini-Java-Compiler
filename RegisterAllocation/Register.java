@@ -1,9 +1,7 @@
 package RegisterAllocation;
 
-import java.util.Comparator;
-
 public class Register implements Comparable<Register> {
-    String RegisterName = null;
+    String registerName;
     char type;
     int number;
 
@@ -18,8 +16,13 @@ public class Register implements Comparable<Register> {
     }
 
     public Register(String registerName) {
-        RegisterName = registerName;
+        this.registerName = registerName;
         type = registerName.charAt(1);
         number = registerName.charAt(2);
+    }
+
+    @Override
+    public String toString() {
+        return registerName;
     }
 }

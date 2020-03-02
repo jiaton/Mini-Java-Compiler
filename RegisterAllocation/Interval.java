@@ -3,6 +3,8 @@ package RegisterAllocation;
 import cs132.util.SourcePos;
 import cs132.vapor.ast.VInstr;
 
+import java.util.HashMap;
+
 public class Interval {
 	public SourcePos start = null;
 	public SourcePos end = null;
@@ -16,6 +18,11 @@ public class Interval {
 		public ActiveInterval(SourcePos start, SourcePos end, String varName) {
 			super(start, end, varName);
 		}
+
+		public ActiveInterval(Interval interval) {
+			super(interval.start, interval.end, interval.varName);
+		}
+
 
 		@Override
 		public int compareTo(Interval o) {
@@ -31,6 +38,10 @@ public class Interval {
 
 		public CandidateInterval(SourcePos start, SourcePos end, String varName) {
 			super(start, end, varName);
+		}
+
+		public CandidateInterval(Interval interval) {
+			super(interval.start, interval.end, interval.varName);
 		}
 
 		@Override
@@ -60,9 +71,24 @@ public class Interval {
 
 	public int getEnd() {
 		return end.line;
-    }
+	}
 
 	public void setEnd(SourcePos end) {
 		this.end = end;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof Interval) {
+			Interval interval = (Interval) obj;
+			return (this.varName == null & interval.varName == null || this.varName.equals(interval.varName)) && this.start.line == interval.start.line && this.start.column == interval.start.column
+					&& this.end.line == interval.end.line && this.end.column == interval.end.column;
+		}
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		return start.line * 12 + end.line * 45 + (varName != null ? varName.hashCode() : 0);
 	}
 }

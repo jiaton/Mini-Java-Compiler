@@ -138,13 +138,16 @@ public class V2VM {
                 }
                 for (Map.Entry<String, SourcePos[]> e : start.entrySet()) {
                     if (!thisnode.sets.active.contains(e.getKey())) {
-                        Interval interval = new Interval(e.getValue()[0], e.getValue()[1]);
+                        Interval interval = new Interval.CandidateInterval(e.getValue()[0], e.getValue()[1]);
                         candidateIntervals.add((Interval.CandidateInterval) interval);
                     }
                 }
             }
 
             HashMap<Interval, Register> regAllocationMap = new LinearScanRegisterAllocation(candidateIntervals).allocate();
+            for (Map.Entry<Interval, Register> entry : regAllocationMap.entrySet()) {
+                System.out.println(entry.getKey().toString() + " " + entry.getValue().toString());
+            }
         }
 
 
