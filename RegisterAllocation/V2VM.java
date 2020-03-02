@@ -45,14 +45,21 @@ public class V2VM {
 
         }
         for(String str : node.sets.outSet){
-            if(!temp.contains(str))
+//            System.out.println("here for "+node.sourcePos.toString());
+//            System.out.println("out for "+node.sourcePos.toString());
+            //node.sets.printOut();
+            if(!temp.contains(str)){
                 temp.add(str);
+                //System.out.println("here + "+str);
+            }
         }
         for(String str : node.sets.defSet){
             if(temp.contains(str))
                 temp.remove(str);
         }
         for(String str : temp){
+            //System.out.println("In for "+node.sourcePos.toString()+": ");
+            node.sets.printIn();
             if(!node.sets.inSet.contains(str)){
                 node.sets.inSet.add(str);
                 changed = true;
@@ -61,7 +68,9 @@ public class V2VM {
         for(Map.Entry<String,Node> entry : node.relatednodes.succNodes.entrySet()){
             for(String str : entry.getValue().sets.inSet){
                 if(!node.sets.outSet.contains(str)){
-                    node.sets.outSet.add(str);
+                    node.sets.addOut(str);
+                    //System.out.println("out for "+node.sourcePos.toString()+"(+"+str);
+                    //node.sets.printOut();
                     changed = true;
                 }
             }
@@ -112,15 +121,52 @@ public class V2VM {
             while(changed){
                 changed = false;
                 for(Map.Entry<String, Node> entry : graph.DFG.nodes.entrySet()){
-                    changed = updateSets(entry.getValue());
+                    boolean c = false;
+                    c = updateSets(entry.getValue());
+                    if(c)
+                        changed = true;
                     entry.getValue().sets.setActive();
                 }
+                //System.out.println(changed);
             }
-            for(Map.Entry<String, Node> entry : graph.DFG.nodes.entrySet()){
-                System.out.println("Active for "+entry.getValue().sourcePos.toString());
-                entry.getValue().sets.printActive();
-                System.out.println("------------------------");
-            }
+//            for(Map.Entry<String, Node> entry : graph.DFG.nodes.entrySet()){
+//                System.out.println("Active for "+entry.getValue().sourcePos.toString());
+//                entry.getValue().sets.printActive();
+//                System.out.println("------------------------");
+//            }
+//
+//            for(Map.Entry<String, Node> entry : graph.DFG.nodes.entrySet()){
+//                Node thisnode = entry.getValue();
+//                System.out.println("In set for "+thisnode.sourcePos.toString());
+//                for(String str : thisnode.sets.inSet){
+//                    System.out.println(str);
+//                }
+//                System.out.println("---------------");
+//            }
+//            for(Map.Entry<String, Node> entry : graph.DFG.nodes.entrySet()){
+//                Node thisnode = entry.getValue();
+//                System.out.println("Out set for "+thisnode.sourcePos.toString());
+//                for(String str : thisnode.sets.outSet){
+//                    System.out.println(str);
+//                }
+//                System.out.println("---------------");
+//            }
+//            for(Map.Entry<String, Node> entry : graph.DFG.nodes.entrySet()){
+//                Node thisnode = entry.getValue();
+//                System.out.println("def set for "+thisnode.sourcePos.toString());
+//                for(String str : thisnode.sets.defSet){
+//                    System.out.println(str);
+//                }
+//                System.out.println("---------------");
+//            }
+//            for(Map.Entry<String, Node> entry : graph.DFG.nodes.entrySet()){
+//                Node thisnode = entry.getValue();
+//                System.out.println("use set for "+thisnode.sourcePos.toString());
+//                for(String str : thisnode.sets.useSet){
+//                    System.out.println(str);
+//                }
+//                System.out.println("---------------");
+//            }
 
             /*generate intervals*/
             HashMap<String, SourcePos[]> start = new HashMap<>();
