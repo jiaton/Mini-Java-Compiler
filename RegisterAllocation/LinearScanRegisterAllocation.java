@@ -13,7 +13,6 @@ public class LinearScanRegisterAllocation {
 
     public LinearScanRegisterAllocation(TreeSet<Interval.CandidateInterval> candidateInvervals) {
         this.candidateInvervals = candidateInvervals;
-        allocate();
     }
 
     private Register allocateANewRegister() {
@@ -28,7 +27,7 @@ public class LinearScanRegisterAllocation {
         Iterator<Interval.ActiveInterval> iterator = active.iterator();
         while (iterator.hasNext()) {
             Interval j = iterator.next();
-            if (j.end.sourcePos.line > interval.start.sourcePos.line) {
+            if (j.end.line > interval.start.line) {
                 return;
             }
             active.remove(j);

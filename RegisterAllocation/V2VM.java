@@ -123,7 +123,8 @@ public class V2VM {
             }
 
             /*generate intervals*/
-            HashMap<String,SourcePos[]> start = new HashMap<>();
+            HashMap<String, SourcePos[]> start = new HashMap<>();
+            TreeSet<Interval.CandidateInterval> candidateIntervals = new TreeSet<>();
             for(Map.Entry<String, Node> entry : graph.DFG.nodes.entrySet()){
                 Node thisnode = entry.getValue();
                 for(String str : thisnode.sets.active){
@@ -132,15 +133,18 @@ public class V2VM {
                         start.put(str, sp);
                     }
                     else{
-                        start.get(str)[1]=thisnode.sourcePos;
+                        start.get(str)[1] = thisnode.sourcePos;
                     }
                 }
-                for(Map.Entry<String,SourcePos[]> e : start.entrySet()){
-                    if(!thisnode.sets.active.contains(e.getKey())){
-                        Interval interval = new Interval(e.getValue()[0],e.getValue()[1]);
+                for (Map.Entry<String, SourcePos[]> e : start.entrySet()) {
+                    if (!thisnode.sets.active.contains(e.getKey())) {
+                        Interval interval = new Interval(e.getValue()[0], e.getValue()[1]);
+                        candidateIntervals.add((Interval.CandidateInterval) interval);
                     }
                 }
             }
+
+            HashMap<Interval, Register> regAllocationMap = new LinearScanRegisterAllocation(candidateIntervals).allocate();
         }
 
 

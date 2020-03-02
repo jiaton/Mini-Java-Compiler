@@ -1,52 +1,68 @@
 package RegisterAllocation;
 
+import cs132.util.SourcePos;
 import cs132.vapor.ast.VInstr;
 
 public class Interval {
-    public VInstr start = null;
-    public VInstr end = null;
+	public SourcePos start = null;
+	public SourcePos end = null;
+	public String varName = null;
 
-    public static class ActiveInterval extends Interval implements Comparable<Interval> {
-        public ActiveInterval(VInstr start, VInstr end) {
-            super(start, end);
-        }
+	public static class ActiveInterval extends Interval implements Comparable<Interval> {
+		public ActiveInterval(SourcePos start, SourcePos end) {
+			super(start, end);
+		}
 
-        @Override
-        public int compareTo(Interval o) {
-            return this.end.sourcePos.line - o.end.sourcePos.line;
-        }
+		public ActiveInterval(SourcePos start, SourcePos end, String varName) {
+			super(start, end, varName);
+		}
+
+		@Override
+		public int compareTo(Interval o) {
+			return this.end.line - o.end.line;
+		}
+	}
+
+	public static class CandidateInterval extends Interval implements Comparable<Interval> {
+
+		public CandidateInterval(SourcePos start, SourcePos end) {
+			super(start, end);
+		}
+
+		public CandidateInterval(SourcePos start, SourcePos end, String varName) {
+			super(start, end, varName);
+		}
+
+		@Override
+		public int compareTo(Interval o) {
+			return this.start.line - o.start.line;
+		}
+	}
+
+	public Interval(SourcePos start, SourcePos end) {
+		this.start = start;
+		this.end = end;
+	}
+
+	public Interval(SourcePos start, SourcePos end, String varName) {
+		this.start = start;
+		this.end = end;
+		this.varName = varName;
+	}
+
+	public int getStart() {
+		return start.line;
+	}
+
+	public void setStart(SourcePos start) {
+		this.start = start;
+	}
+
+	public int getEnd() {
+		return end.line;
     }
 
-    public static class CandidateInterval extends Interval implements Comparable<Interval> {
-
-        public CandidateInterval(VInstr start, VInstr end) {
-            super(start, end);
-        }
-
-        @Override
-        public int compareTo(Interval o) {
-            return this.start.sourcePos.line - o.start.sourcePos.line;
-        }
-    }
-
-    public Interval(VInstr start, VInstr end) {
-        this.start = start;
-        this.end = end;
-    }
-
-    public int getStart() {
-        return start.sourcePos.line;
-    }
-
-    public void setStart(VInstr start) {
-        this.start = start;
-    }
-
-    public int getEnd() {
-        return end.sourcePos.line;
-    }
-
-    public void setEnd(VInstr end) {
-        this.end = end;
-    }
+	public void setEnd(SourcePos end) {
+		this.end = end;
+	}
 }
