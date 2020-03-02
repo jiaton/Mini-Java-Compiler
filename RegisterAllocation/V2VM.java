@@ -1,17 +1,21 @@
+package RegisterAllocation;
 import cs132.util.ProblemException;
+import cs132.util.SourcePos;
 import cs132.vapor.ast.*;
 import cs132.vapor.parser.VaporParser;
 import cs132.vapor.ast.VaporProgram;
 import cs132.vapor.ast.VBuiltIn.Op;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import RegisterAllocation.*;
 
 
-
-public class V2VM<MyPara,MyReturn,Throwable extends java.lang.Throwable> extends VInstr.VisitorPR<MyPara,MyReturn,Throwable> {
+public class V2VM {
     public static VaporProgram parseVapor(InputStream in, PrintStream err) throws IOException {
         Op[] ops = {
                 Op.Add, Op.Sub, Op.MulS, Op.Eq, Op.Lt, Op.LtS,
@@ -33,47 +37,103 @@ public class V2VM<MyPara,MyReturn,Throwable extends java.lang.Throwable> extends
         }
         return tree;
     }
-    public static void main(String[] args) throws IOException {
-        PrintStream err = new PrintStream(System.out);
-        VaporProgram tree = parseVapor(System.in,err);
-        IOGenerator io=new IOGenerator();
-        for(VFunction function : tree.functions){
-            for(VInstr Instr : function.body){
-                MyPara para = new MyPara(io);
-                Instr.accept(para,io);
+    public static boolean updateSets(Node node){
+        boolean changed = false;
+        HashSet<String> temp = new HashSet<>();
+        for(String str : node.sets.useSet){
+            if(!node.sets.inSet.contains(str)){
+                node.sets.inSet.add(str);
+                changed=true;
+            }
+
+        }
+        for(String str : node.sets.outSet){
+            if(!temp.contains(str))
+                temp.add(str);
+        }
+        for(String str : node.sets.defSet){
+            if(temp.contains(str))
+                temp.remove(str);
+        }
+        for(String str : temp){
+            if(!node.sets.inSet.contains(str)){
+                node.sets.inSet.add(str);
+                changed = true;
             }
         }
-    }
-    public MyReturn visit(MyPara var1, VAssign var2) throws Throwable{
-
-    }
-
-    public MyReturn visit(MyPara var1, VCall var2) throws Throwable{
-
-    }
-
-    public MyReturn visit(MyPara var1, VBuiltIn var2) throws Throwable{
-
+        for(Map.Entry<String,Node> entry : node.relatednodes.succNodes.entrySet()){
+            for(String str : entry.getValue().sets.inSet){
+                if(!node.sets.outSet.contains(str)){
+                    node.sets.outSet.add(str);
+                    changed = true;
+                }
+            }
+        }
+        return changed;
     }
 
-    public MyReturn visit(MyPara var1, VMemWrite var2) throws Throwable{
+    public static void main(String[] args) throws IOException {
+
+        /*Create graph and sets*/
+
+        PrintStream err = new PrintStream(System.out);
+        //VaporProgram tree = parseVapor(System.in,err);
+        FileInputStream file = new FileInputStream("test.vapor");
+        VaporProgram tree = parseVapor(file,err);
+        HashMap<String,DFGGenerator> graphTable=new HashMap<>();
+
+        //Generation DFG
+        for(VFunction function : tree.functions){
+            DFGGenerator graph=new DFGGenerator();
+            graphTable.put(function.ident,graph);
+            for(VCodeLabel label : function.labels){
+                graph.labelTable.put(label.ident,label.sourcePos);
+            }
+            for(VInstr Instr : function.body){
+                Instr.accept(null,graph);
+            }
+            for(Map.Entry<String,SourcePos> entry : (Set<Map.Entry<String,SourcePos>>)graph.labelTable.entrySet()){
+                for(VInstr Instr : function.body){
+                    if(Instr.sourcePos.line>=entry.getValue().line){
+                        Node thisnode = graph.DFG.getNode(Instr.sourcePos.toString());
+                        for(Map.Entry<String,String>entry2 : (Set<Map.Entry<String,String>>)graph.inheritTable.entrySet()){
+//                            if(entry2.getValue()!=null){
+//                                System.out.println(entry2.getKey()+":"+entry2.getValue()+" "+entry.getKey());
+//                            }
+                            if(entry2.getValue()!=null&&entry2.getValue().equals(":"+entry.getKey())){
+                                //System.out.println("add "+entry2.getKey()+"->"+thisnode.sourcePos.toString());
+                                Node succnode = graph.DFG.getNode(entry2.getKey());
+                                thisnode.addPre(succnode);
+                                succnode.addSucc(thisnode);
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+            boolean changed = true;
+            while(changed){
+                changed = false;
+                for(Map.Entry<String, Node> entry : graph.DFG.nodes.entrySet()){
+                    changed = updateSets(entry.getValue());
+                    entry.getValue().sets.setActive();
+                }
+            }
+            for(Map.Entry<String, Node> entry : graph.DFG.nodes.entrySet()){
+                System.out.println("Active for "+entry.getValue().sourcePos.toString());
+                entry.getValue().sets.printActive();
+                System.out.println("------------------------");
+            }
+
+//            System.out.println("DFG of "+function.ident+":");
+//            graph.DFG.print();
+//            System.out.println("-------------------------");
+        }
+
+
+
 
     }
 
-    public MyReturn visit(MyPara var1, VMemRead var2) throws Throwable{
-
-    }
-
-    public MyReturn visit(MyPara var1, VBranch var2) throws Throwable{
-
-    }
-
-    public MyReturn visit(MyPara var1, VGoto var2) throws Throwable{
-
-    }
-
-    public MyReturn visit(MyPara var1, VReturn var2) throws Throwable{
-
-    }
 
 }
