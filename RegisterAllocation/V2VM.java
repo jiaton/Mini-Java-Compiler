@@ -9,8 +9,6 @@ import cs132.vapor.ast.VBuiltIn.Op;
 import java.io.*;
 import java.util.*;
 
-import RegisterAllocation.*;
-
 
 public class V2VM {
     public static VaporProgram parseVapor(InputStream in, PrintStream err) throws IOException {
@@ -59,7 +57,6 @@ public class V2VM {
         }
         for(String str : temp){
             //System.out.println("In for "+node.sourcePos.toString()+": ");
-            node.sets.printIn();
             if(!node.sets.inSet.contains(str)){
                 node.sets.inSet.add(str);
                 changed = true;
@@ -184,14 +181,17 @@ public class V2VM {
                 }
                 for (Map.Entry<String, SourcePos[]> e : start.entrySet()) {
                     if (!thisnode.sets.active.contains(e.getKey())) {
-                        Interval interval = new Interval.CandidateInterval(e.getValue()[0], e.getValue()[1]);
+                        Interval interval = new Interval.CandidateInterval(e.getValue()[0], e.getValue()[1], e.getKey());
                         candidateIntervals.add((Interval.CandidateInterval) interval);
                     }
                 }
             }
 
-            HashMap<Interval, Register> regAllocationMap = new LinearScanRegisterAllocation(candidateIntervals).allocate();
-            for (Map.Entry<Interval, Register> entry : regAllocationMap.entrySet()) {
+            LinearScanRegisterAllocation.AllocationRecord allocationRecord = new LinearScanRegisterAllocation(candidateIntervals).allocate();
+            for (Map.Entry<Interval, Register> entry : allocationRecord.registerAllocation.entrySet()) {
+                System.out.println(entry.getKey().toString() + " " + entry.getValue().toString());
+            }
+            for (Map.Entry<Interval, String> entry : allocationRecord.memoryAllocation.entrySet()) {
                 System.out.println(entry.getKey().toString() + " " + entry.getValue().toString());
             }
         }

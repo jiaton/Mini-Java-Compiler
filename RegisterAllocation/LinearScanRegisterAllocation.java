@@ -4,10 +4,20 @@ import java.util.*;
 
 
 public class LinearScanRegisterAllocation {
+    public class AllocationRecord {
+        LinkedHashMap<Interval, Register> registerAllocation;
+        LinkedHashMap<Interval, String> memoryAllocation;
+
+        public AllocationRecord(LinkedHashMap<Interval, Register> registerAllocation, LinkedHashMap<Interval, String> memoryAllocation) {
+            this.registerAllocation = registerAllocation;
+            this.memoryAllocation = memoryAllocation;
+        }
+    }
+
     TreeSet<Interval.ActiveInterval> active = new TreeSet<>();        // in order of increasing end point
     TreeSet<Interval.CandidateInterval> candidateInvervals;  // in order of increasing start point
     TreeSet<Register> freeRegisterPool = new TreeSet<>();
-    LinkedHashMap<Interval, Register> allocationRecord = new LinkedHashMap<>();
+    LinkedHashMap<Interval, Register> RegisterAllocationRecord = new LinkedHashMap<>();
     LinkedHashMap<Interval, Integer> local = new LinkedHashMap<>();
     int locaStackIndex = 0;
 
@@ -35,7 +45,7 @@ public class LinearScanRegisterAllocation {
             if (j.end.line > interval.start.line) {
                 return;
             }
-            freeRegisterPool.add(allocationRecord.get(j));
+            freeRegisterPool.add(RegisterAllocationRecord.get(j));
             iterator.remove();
         }
     }
@@ -43,7 +53,7 @@ public class LinearScanRegisterAllocation {
     private void spillAtInterval(Interval interval) {
         Interval spill = active.last();
         if (spill.getEnd() > interval.getEnd()) {
-            allocationRecord.put(interval, allocationRecord.get(spill));
+            RegisterAllocationRecord.put(interval, RegisterAllocationRecord.get(spill));
             local.put(spill, locaStackIndex++);
             active.remove(spill);
             active.add(new Interval.ActiveInterval(interval));
@@ -52,7 +62,7 @@ public class LinearScanRegisterAllocation {
         }
     }
 
-    public HashMap<Interval, Register> allocate() {
+    public AllocationRecord allocate() {
         int R = 17;
         for (Interval i : candidateInvervals) {
             expireOldIntervals(i);
@@ -60,12 +70,17 @@ public class LinearScanRegisterAllocation {
                 /*Spill*/
                 spillAtInterval(i);
             } else { // No need to spill
-                allocationRecord.put(i, allocateANewRegister());
+                RegisterAllocationRecord.put(i, allocateANewRegister());
                 active.add(new Interval.ActiveInterval(i));
             }
 
         }
-        return allocationRecord;
+        /*add all of the spilled intervals in local to LocalAllocationRecord*/
+        LinkedHashMap<Interval, String> localAllocationRecord = new LinkedHashMap<>();
+        for (Map.Entry<Interval, Integer> entry : local.entrySet()) {
+            localAllocationRecord.put(entry.getKey(), "local[" + entry.getValue() + "]");
+        }
+        return new AllocationRecord(RegisterAllocationRecord, localAllocationRecord);
     }
 
 

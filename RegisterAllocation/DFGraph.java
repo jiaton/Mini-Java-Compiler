@@ -3,13 +3,10 @@ package RegisterAllocation;
 import cs132.util.SourcePos;
 
 import java.security.KeyStore;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 
 public class DFGraph {
-    public HashMap<String, Node> nodes;    //<sourcePos.toString, node>
+    public LinkedHashMap<String, Node> nodes;    //<sourcePos.toString, node>
     public Node getNode(String pos){
         return nodes.get(pos);
     }
@@ -19,9 +16,9 @@ public class DFGraph {
     public HashMap<String, Node> getSucc(String pos){
         return nodes.get(pos).relatednodes.succNodes;
     }
-    public void initial(SourcePos sourcePos){
-        nodes = new HashMap<>();
-        nodes.put(sourcePos.toString(),new Node(sourcePos));
+    public void initial(SourcePos sourcePos) {
+        nodes = new LinkedHashMap<>();
+        nodes.put(sourcePos.toString(), new Node(sourcePos));
     }
     public void setSucc(SourcePos sourcePos, HashSet<SourcePos> list){
         Node tnode = getNode(sourcePos.toString());
