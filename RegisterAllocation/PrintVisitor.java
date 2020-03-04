@@ -127,25 +127,57 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 
     @Override
     public MyReturn visit(MyPara myPara, VBuiltIn vBuiltIn) throws Exception {
-        Interval destInterval = myPara.intervalMap.get(vBuiltIn.dest.toString());
-        String destRegString = findRegOrLocal(destInterval, myPara.registerAllocation, myPara.memoryAllocation);
-        if (vBuiltIn.op.numParams > 1) {
-            printer.println(destRegString + " = " + vBuiltIn.op.name + "(" + vBuiltIn.args[0].toString() + " " + vBuiltIn.args[1].toString() + ")");
-        } else {
-            printer.println(destRegString + " = " + vBuiltIn.op.name + "(" + vBuiltIn.args[0].toString() + ")");
+        /*dest or no dest / 1 param or 2 param*/
+        /*check if the BuiltIn has a destination*/
+        boolean hasDest = false;
+        if (vBuiltIn.dest != null) {
+            hasDest = true;
         }
+        if (hasDest) {
+            Interval destInterval = myPara.intervalMap.get(vBuiltIn.dest.toString());
+            String destRegString = findRegOrLocal(destInterval, myPara.registerAllocation, myPara.memoryAllocation);
+            if (vBuiltIn.op.numParams > 1) {
+                printer.println(destRegString + " = " + vBuiltIn.op.name + "(" + vBuiltIn.args[0].toString() + " " + vBuiltIn.args[1].toString() + ")");
+            } else {
+                printer.println(destRegString + " = " + vBuiltIn.op.name + "(" + vBuiltIn.args[0].toString() + ")");
+            }
+        } else { //Error("bla bla bla")
+            printer.println(vBuiltIn.op.name + "(" + vBuiltIn.args[0] + ")");
+        }
+
         return null;
     }
 
     @Override
     public MyReturn visit(MyPara myPara, VMemWrite vMemWrite) throws Exception {
-        printer.println(vMemWrite.dest.toString() + " = " + vMemWrite.source.toString());
+        if (vMemWrite.dest instanceof VMemRef.Global) { //MemRef: Global or Stack
+            Interval destInterval = myPara.intervalMap.get(((VMemRef.Global) vMemWrite.dest).base.toString());
+            String destRegString = findRegOrLocal(destInterval, myPara.registerAllocation, myPara.memoryAllocation);
+            int byteOffset = ((VMemRef.Global) vMemWrite.dest).byteOffset;
+            if (byteOffset == 0) {
+                printer.println("[" + destRegString + "] = " + vMemWrite.source.toString());
+            } else {
+                printer.println("[" + destRegString + "+" + byteOffset + "] = " + vMemWrite.source.toString());
+            }
+        }
+
         return null;
     }
 
     @Override
     public MyReturn visit(MyPara myPara, VMemRead vMemRead) throws Exception {
-        printer.println(vMemRead.dest.toString() + " = " + vMemRead.source.toString());
+        Interval destInterval = myPara.intervalMap.get(vMemRead.dest.toString());
+        String destRegString = findRegOrLocal(destInterval, myPara.registerAllocation, myPara.memoryAllocation);
+        if (vMemRead.source instanceof VMemRef.Global) { //MemRef: Global or Stack
+            Interval sourceInterval = myPara.intervalMap.get(((VMemRef.Global) vMemRead.source).base.toString());
+            String sourceRegString = findRegOrLocal(sourceInterval, myPara.registerAllocation, myPara.memoryAllocation);
+            int byteOffset = ((VMemRef.Global) vMemRead.source).byteOffset;
+            if (byteOffset == 0) {
+                printer.println(destRegString + " = [" + sourceRegString + "]");
+            } else {
+                printer.println(destRegString + " = [" + sourceRegString + "+" + byteOffset + "]");
+            }
+        }
         return null;
     }
 
