@@ -142,10 +142,10 @@ public class DFGGenerator <MyPara,Sets,Throwable extends java.lang.Throwable> ex
     public Sets visit(MyPara var1, VAssign var2) throws Throwable{
         nodeSetupNoGoto(var2);
         Node thisnode = DFG.getNode(var2.sourcePos.toString());
-        if(var2.dest!=null){
+        if (var2.dest != null) {
             thisnode.sets.addDef(var2.dest.toString());
         }
-        if(!isInt(var2.source.toString())&&!isMessage(var2.source.toString()))
+        if (!isInt(var2.source.toString()) && !isMessage(var2.source.toString()) && var2.source.toString().charAt(0) != ':')
             thisnode.sets.addUse(var2.source.toString());
         return null;
     }
@@ -157,7 +157,7 @@ public class DFGGenerator <MyPara,Sets,Throwable extends java.lang.Throwable> ex
             thisnode.sets.addDef(var2.dest.toString());
         }
         for(VOperand op : var2.args){
-            if(!isInt(op.toString())&&!isMessage(op.toString()))
+            if (!isInt(op.toString()) && !isMessage(op.toString()) && op.toString().charAt(0) != ':')
                 thisnode.sets.addUse(op.toString());
         }
         return null;
@@ -171,7 +171,7 @@ public class DFGGenerator <MyPara,Sets,Throwable extends java.lang.Throwable> ex
         }
 
         for(VOperand op : var2.args){
-            if(!isInt(op.toString())&&!isMessage(op.toString()))
+            if (!isInt(op.toString()) && !isMessage(op.toString()) && op.toString().charAt(0) != ':')
                 thisnode.sets.addUse(op.toString());
         }
         return null;
@@ -180,7 +180,7 @@ public class DFGGenerator <MyPara,Sets,Throwable extends java.lang.Throwable> ex
     public Sets visit(MyPara var1, VMemWrite var2) throws Throwable{
         nodeSetupNoGoto(var2);
         Node thisnode = DFG.getNode(var2.sourcePos.toString());
-        if(!isInt(var2.source.toString())&&!isMessage(var2.source.toString()))
+        if (!isInt(var2.source.toString()) && !isMessage(var2.source.toString()) && var2.source.toString().charAt(0) != ':')
             thisnode.sets.addUse(var2.source.toString());
         return null;
     }
@@ -197,7 +197,7 @@ public class DFGGenerator <MyPara,Sets,Throwable extends java.lang.Throwable> ex
     public Sets visit(MyPara var1, VBranch var2) throws Throwable{
         nodeSetupBranch(var2);
         Node thisnode = DFG.getNode(var2.sourcePos.toString());
-        if(!isInt(var2.value.toString())&&!isMessage(var2.value.toString()))
+        if (!isInt(var2.value.toString()) && !isMessage(var2.value.toString()) && var2.value.toString().charAt(0) != ':')
             thisnode.sets.addUse(var2.value.toString());
         return null;
     }
@@ -210,8 +210,8 @@ public class DFGGenerator <MyPara,Sets,Throwable extends java.lang.Throwable> ex
     public Sets visit(MyPara var1, VReturn var2) throws Throwable{
         nodeSetupNoGoto(var2);
         Node thisnode = DFG.getNode(var2.sourcePos.toString());
-        if(var2.value==null)    return null;
-        if(!isInt(var2.value.toString())&&!isMessage(var2.value.toString()))
+        if (var2.value == null) return null;
+        if (!isInt(var2.value.toString()) && !isMessage(var2.value.toString()) && var2.value.toString().charAt(0) != ':')
             thisnode.sets.addUse(var2.value.toString());
         return null;
     }
