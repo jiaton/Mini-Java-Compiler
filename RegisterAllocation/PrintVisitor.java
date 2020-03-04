@@ -31,7 +31,7 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
     private Interval findIntervalOfVar(String varName, SourcePos sourcePos, LinkedHashMap<String, HashSet<Interval>> intervalMap) {
         HashSet<Interval> intervals = intervalMap.get(varName);
         if (intervals == null) {
-            System.err.println("interval of var not found, varName: " + varName);
+            System.err.println("interval of var not found, varName: " + varName + " Pos: " + sourcePos);
             return null;
         } else {
             for (Interval interval : intervals) {

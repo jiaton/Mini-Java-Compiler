@@ -160,6 +160,7 @@ public class DFGGenerator <MyPara,Sets,Throwable extends java.lang.Throwable> ex
             if (!isInt(op.toString()) && !isMessage(op.toString()) && op.toString().charAt(0) != ':')
                 thisnode.sets.addUse(op.toString());
         }
+        thisnode.sets.addUse(var2.addr.toString());
         return null;
     }
 
