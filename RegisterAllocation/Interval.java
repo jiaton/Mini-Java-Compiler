@@ -1,9 +1,10 @@
 package RegisterAllocation;
 
-import cs132.util.SourcePos;
-import cs132.vapor.ast.VInstr;
 
-import java.util.HashMap;
+import cs132.util.SourcePos;
+
+
+
 
 public class Interval {
 	public SourcePos start = null;
@@ -26,7 +27,13 @@ public class Interval {
 
 		@Override
 		public int compareTo(Interval o) {
-			return this.end.line - o.end.line;
+			if (this.end.line != o.end.line) {
+				return this.end.line - o.end.line;
+			} else if (this.end.column != o.end.column) {
+				return this.end.column - o.end.column;
+			} else {
+				return this.varName.compareTo(o.varName);
+			}
 		}
 	}
 
@@ -46,7 +53,13 @@ public class Interval {
 
 		@Override
 		public int compareTo(Interval o) {
-			return this.start.line - o.start.line;
+			if (this.start.line != o.start.line) {
+				return this.start.line - o.start.line;
+			} else if (this.start.column != o.start.column) {
+				return this.start.column - o.start.column;
+			} else {
+				return this.varName.compareTo(o.varName);
+			}
 		}
 	}
 
@@ -81,7 +94,7 @@ public class Interval {
 	public boolean equals(Object obj) {
 		if (obj instanceof Interval) {
 			Interval interval = (Interval) obj;
-			return (this.varName == null & interval.varName == null || this.varName.equals(interval.varName)) && this.start.line == interval.start.line && this.start.column == interval.start.column
+			return (this.varName == null || interval.varName == null || this.varName.equals(interval.varName)) && this.start.line == interval.start.line && this.start.column == interval.start.column
 					&& this.end.line == interval.end.line && this.end.column == interval.end.column;
 		}
 		return false;
