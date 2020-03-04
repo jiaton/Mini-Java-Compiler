@@ -170,7 +170,7 @@ public class V2VM {
 //            }
 
             /*generate intervals*/
-            LinkedHashMap<String, Interval> intervalMap = new LinkedHashMap<>();
+            LinkedHashMap<String, HashSet<Interval>> intervalMap = new LinkedHashMap<>();
             HashMap<String, SourcePos[]> start = new HashMap<>();
             TreeSet<Interval.CandidateInterval> candidateIntervals = new TreeSet<>();
             for (Map.Entry<String, Node> entry : graph.DFG.nodes.entrySet()) {
@@ -188,7 +188,14 @@ public class V2VM {
                     if (!thisnode.sets.active.contains(e.getKey())) {
                         Interval interval = new Interval.CandidateInterval(e.getValue()[0], e.getValue()[1], e.getKey());
                         candidateIntervals.add((Interval.CandidateInterval) interval);
-                        intervalMap.put(e.getKey(), interval);
+                        HashSet<Interval> previousIntervals = intervalMap.get(e.getKey());
+                        /*set up interval Map (varName -> Interval[]: arrayList))*/
+                        if (previousIntervals == null) {
+                            intervalMap.put(e.getKey(), new HashSet<>(Collections.singletonList(interval)));
+                        } else {
+                            previousIntervals.add(interval);
+//                            intervalMap.put(e.getKey(), previousIntervals);
+                        }
                     }
                 }
             }
@@ -201,7 +208,7 @@ public class V2VM {
 //                System.out.println(entry.getKey().toString() + " " + entry.getValue().toString());
 //            }
             for (VInstr instr : function.body) {
-                MyPara myPara = new MyPara(intervalMap, allocationRecord.registerAllocation, allocationRecord.memoryAllocation);
+                MyPara myPara = new MyPara(graph.DFG, intervalMap, allocationRecord.registerAllocation, allocationRecord.memoryAllocation);
                 instr.accept(myPara, new PrintVisitor());
             }
         }
