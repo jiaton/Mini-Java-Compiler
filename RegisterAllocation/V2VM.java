@@ -6,6 +6,7 @@ import cs132.vapor.ast.*;
 import cs132.vapor.parser.VaporParser;
 import cs132.vapor.ast.VaporProgram;
 import cs132.vapor.ast.VBuiltIn.Op;
+import sun.awt.image.ImageWatched;
 
 
 import java.io.*;
@@ -97,6 +98,15 @@ public class V2VM {
                 graph.labelTable.put(label.ident, label.sourcePos);
             }
             for (VInstr Instr : function.body) {
+                LinkedHashMap<String, String> paramAllocation = new LinkedHashMap<>();
+                for (int i = 0; i < function.params.length; i++) {
+                    paramAllocation.put(function.params[i].toString(), "$a" + i);
+                    if (i >= 4) {
+                        paramAllocation.put(function.params[i].toString(), "in[" + i + "]");
+                    }
+                }
+                MyPara myPara = new MyPara(null, null, null, null, paramAllocation);
+
                 Instr.accept(null, graph);
             }
             for (Map.Entry<String, SourcePos> entry : (Set<Map.Entry<String, SourcePos>>) graph.labelTable.entrySet()) {
@@ -208,7 +218,14 @@ public class V2VM {
 //                System.out.println(entry.getKey().toString() + " " + entry.getValue().toString());
 //            }
             for (VInstr instr : function.body) {
-                MyPara myPara = new MyPara(graph.DFG, intervalMap, allocationRecord.registerAllocation, allocationRecord.memoryAllocation);
+                LinkedHashMap<String, String> paramAllocation = new LinkedHashMap<>();
+                for (int i = 0; i < function.params.length; i++) {
+                    paramAllocation.put(function.params[i].toString(), "$a" + i);
+                    if (i >= 4) {
+                        paramAllocation.put(function.params[i].toString(), "in[" + i + "]");
+                    }
+                }
+                MyPara myPara = new MyPara(graph.DFG, intervalMap, allocationRecord.registerAllocation, allocationRecord.memoryAllocation, paramAllocation);
                 instr.accept(myPara, new PrintVisitor());
             }
         }
