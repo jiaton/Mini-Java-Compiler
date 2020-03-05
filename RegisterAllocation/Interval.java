@@ -10,6 +10,12 @@ public class Interval {
 	public SourcePos start = null;
 	public SourcePos end = null;
 	public String varName = null;
+	public boolean hasPos = true;
+
+	public Interval(String varName) {
+		this.hasPos = false;
+		this.varName = varName;
+	}
 
 	public static class ActiveInterval extends Interval implements Comparable<Interval> {
 		public ActiveInterval(SourcePos start, SourcePos end) {
@@ -102,6 +108,10 @@ public class Interval {
 
 	@Override
 	public int hashCode() {
-		return start.line * 12 + end.line * 45 + (varName != null ? varName.hashCode() : 0);
+		if (hasPos) {
+			return start.line * 12 + end.line * 45 + (varName != null ? varName.hashCode() : 0);
+		} else {
+			return varName.hashCode();
+		}
 	}
 }

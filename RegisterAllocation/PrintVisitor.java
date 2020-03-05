@@ -22,6 +22,8 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
             reg = registerAllocation.get(interval).toString();
         } else if (memoryAllocation.get(interval) != null) {
             reg = memoryAllocation.get(interval);
+        } else if (!interval.hasPos) {
+            reg = interval.varName; //return the number or name directly.
         } else {
             reg = null;
         }
@@ -30,7 +32,10 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 
     private Interval findIntervalOfVar(String varName, SourcePos sourcePos, LinkedHashMap<String, HashSet<Interval>> intervalMap) {
         HashSet<Interval> intervals = intervalMap.get(varName);
-        if (intervals == null) {
+
+        if (varName.matches("\\d+") || varName.matches("^:.*")) { // the var is number or ":" initialized.
+            return new Interval(varName);
+        } else if (intervals == null) {
             System.err.println("interval of var not found, varName: " + varName + " Pos: " + sourcePos);
             return null;
         } else {
