@@ -191,7 +191,7 @@ public class DFGGenerator <MyPara,Sets,Throwable extends java.lang.Throwable> ex
         Node thisnode = DFG.getNode(var2.sourcePos.toString());
         if(var2.dest!=null){
             thisnode.sets.addDef(var2.dest.toString());
-        }
+    }
         return null;
     }
 

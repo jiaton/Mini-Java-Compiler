@@ -193,9 +193,9 @@ public class V2VM {
                         start.get(str)[1] = thisnode.sourcePos;
                     }
                 }
-
+                ArrayList<String> removeList = new ArrayList<>();
                 for (Map.Entry<String, SourcePos[]> e : start.entrySet()) {
-                    if (!thisnode.sets.active.contains(e.getKey())) {
+                    if (!thisnode.sets.active.contains(e.getKey()) || thisnode.isSuccEmpty()) {
                         Interval interval = new Interval.CandidateInterval(e.getValue()[0], e.getValue()[1], e.getKey());
                         candidateIntervals.add((Interval.CandidateInterval) interval);
                         HashSet<Interval> previousIntervals = intervalMap.get(e.getKey());
@@ -206,7 +206,12 @@ public class V2VM {
                             previousIntervals.add(interval);
 //                            intervalMap.put(e.getKey(), previousIntervals);
                         }
+                        removeList.add(e.getKey());
+//                        start.remove(e.getKey());
                     }
+                }
+                for (String key : removeList) {
+                    start.remove(key);
                 }
             }
 

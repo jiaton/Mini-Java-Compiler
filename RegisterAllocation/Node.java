@@ -24,11 +24,16 @@ public class Node {
 //            return false;
 //    }
 
-    public void addPre(Node pre){
+    public void addPre(Node pre) {
         this.relatednodes.addPre(pre);
     }
-    public void addSucc(Node succ){
+
+    public void addSucc(Node succ) {
         this.relatednodes.addSucc(succ);
+    }
+
+    public boolean isSuccEmpty() {
+        return this.relatednodes.succNodes == null || this.relatednodes.succNodes.isEmpty();
     }
 }
 

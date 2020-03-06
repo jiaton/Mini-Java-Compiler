@@ -10,11 +10,11 @@ public class Interval {
 	public SourcePos start = null;
 	public SourcePos end = null;
 	public String varName = null;
-	public boolean hasPos = true;
+	public boolean hasPos = true; //temporal var has a position
 
 	public Interval(String varName) {
 		this.hasPos = false;
-		this.varName = varName;
+		this.varName = varName; //number or start with ":"
 	}
 
 	public static class ActiveInterval extends Interval implements Comparable<Interval> {
