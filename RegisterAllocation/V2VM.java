@@ -110,21 +110,30 @@ public class V2VM {
                             functionMap.get(entry.getKey()).add(s);
                         }
                     }
-                }else{
-                    functionMap.put(entry.getKey(),new HashSet<>());
-                    for(String s : entry.getValue()){
-                        if(!functionMap.get(entry.getKey()).contains(s)){
+                } else {
+                    functionMap.put(entry.getKey(), new HashSet<>());
+                    for (String s : entry.getValue()) {
+                        if (!functionMap.get(entry.getKey()).contains(s)) {
                             functionMap.get(entry.getKey()).add(s);
                         }
                     }
                 }
             }
         }
-
+        Printer printer = new Printer();
+        for (VDataSegment dataSegment : tree.dataSegments) {
+            printer.println("const " + dataSegment.ident);
+            printer.addIndentation();
+            VOperand.Static[] labels = dataSegment.values;
+            for (VOperand.Static label : labels) {
+                printer.println(":" + ((VLabelRef) label).ident);
+            }
+            printer.resetIndentation();
+        }
         //Generation DFG
         for (VFunction function : tree.functions) {
             DFGGenerator graph = new DFGGenerator();
-            graph.ident=function.ident;
+            graph.ident = function.ident;
             graphTable.put(function.ident, graph);
             for (VCodeLabel label : function.labels) {
                 graph.labelTable.put(label.ident, label.sourcePos);
@@ -251,10 +260,26 @@ public class V2VM {
             }
 
             LinearScanRegisterAllocation.AllocationRecord allocationRecord = new LinearScanRegisterAllocation(candidateIntervals).allocate();
+            /*print function name*/
+
+            printer.println("func " + function.ident + "[in 0, out 0, local 0]"); // TODO: 3/6/2020 in out local
+            printer.addIndentation();
+            /*print labels and instructions*/
+            int prevLine = function.sourcePos.line;
+            int labelIndex = 0;
+            VCodeLabel[] labels = function.labels;
             for (VInstr instr : function.body) {
                 MyPara myPara = new MyPara(graph.DFG, intervalMap, allocationRecord.registerAllocation, allocationRecord.memoryAllocation, paramAllocation);
+                while (instr.sourcePos.line != prevLine + 1) {
+                    Printer.resetIndentation();
+                    printer.addIndentation();
+                    printer.println(labels[labelIndex++].ident + ":");
+                    prevLine++;
+                }
                 instr.accept(myPara, new PrintVisitor());
+                prevLine++;
             }
+            Printer.resetIndentation();
         }
 
 

@@ -163,6 +163,7 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 	public MyReturn visit(MyPara myPara, VBuiltIn vBuiltIn) throws Exception {
 		/*dest or no dest / 1 param or 2 param*/
 		/*check if the BuiltIn has a destination*/
+		// TODO: 3/6/2020 args might be from parameter. 
 		boolean hasDest = false;
 		if (vBuiltIn.dest != null) {
 			hasDest = true;
@@ -217,12 +218,23 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 
 	@Override
 	public MyReturn visit(MyPara myPara, VBranch vBranch) throws Exception {
-
+		boolean positive = vBranch.positive;
+		String target = vBranch.target.toString();
+		String valueName = vBranch.value.toString();
+		Interval varInterval = findIntervalOfVar(valueName, vBranch.value.sourcePos, myPara.intervalMap);
+		String varReg = findRegOrLocal(varInterval, myPara.registerAllocation, myPara.memoryAllocation, myPara.paramAllocation);
+		if (positive) {
+			printer.println("if " + varReg + " goto " + target);
+		} else {
+			printer.println("if0 " + varReg + " goto " + target);
+		}
+		printer.addIndentation();
 		return null;
 	}
 
 	@Override
 	public MyReturn visit(MyPara myPara, VGoto vGoto) throws Exception {
+		printer.println("goto " + vGoto.target);
 		return null;
 	}
 

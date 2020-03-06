@@ -1,7 +1,7 @@
 package RegisterAllocation;
 
 public class Printer {
-    public int numberOfIndentation = 0;
+    public static int numberOfIndentation = 0;
 
     public void addIndentation() {
         numberOfIndentation++;
@@ -9,6 +9,10 @@ public class Printer {
 
     public void removeIndentation() {
         numberOfIndentation--;
+    }
+
+    public static void resetIndentation() {
+        Printer.numberOfIndentation = 0;
     }
 
     public void println(String string) {
