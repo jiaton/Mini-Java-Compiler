@@ -130,15 +130,6 @@ public class V2VM {
                 graph.labelTable.put(label.ident, label.sourcePos);
             }
             for (VInstr Instr : function.body) {
-                LinkedHashMap<String, String> paramAllocation = new LinkedHashMap<>();
-                for (int i = 0; i < function.params.length; i++) {
-                    paramAllocation.put(function.params[i].toString(), "$a" + i);
-                    if (i >= 4) {
-                        paramAllocation.put(function.params[i].toString(), "in[" + i + "]");
-                    }
-                }
-                MyPara myPara = new MyPara(null, null, null, null, paramAllocation);
-
                 Instr.accept(null, graph);
             }
             for (Map.Entry<String, SourcePos> entry : (Set<Map.Entry<String, SourcePos>>) graph.labelTable.entrySet()) {
@@ -215,6 +206,16 @@ public class V2VM {
             LinkedHashMap<String, HashSet<Interval>> intervalMap = new LinkedHashMap<>();
             HashMap<String, SourcePos[]> start = new HashMap<>();
             TreeSet<Interval.CandidateInterval> candidateIntervals = new TreeSet<>();
+
+            /*set up params*/
+            LinkedHashMap<String, String> paramAllocation = new LinkedHashMap<>();
+            for (int i = 0; i < function.params.length; i++) {
+                paramAllocation.put(function.params[i].toString(), "$a" + i);
+                if (i >= 4) {
+                    paramAllocation.put(function.params[i].toString(), "in[" + i + "]");
+                }
+            }
+
             for (Map.Entry<String, Node> entry : graph.DFG.nodes.entrySet()) {
                 Node thisnode = entry.getValue();
                 for (String str : thisnode.sets.active) {
@@ -228,18 +229,20 @@ public class V2VM {
                 ArrayList<String> removeList = new ArrayList<>();
                 for (Map.Entry<String, SourcePos[]> e : start.entrySet()) {
                     if (!thisnode.sets.active.contains(e.getKey()) || thisnode.isSuccEmpty()) {
-                        Interval interval = new Interval.CandidateInterval(e.getValue()[0], e.getValue()[1], e.getKey());
-                        candidateIntervals.add((Interval.CandidateInterval) interval);
-                        HashSet<Interval> previousIntervals = intervalMap.get(e.getKey());
-                        /*set up interval Map (varName -> Interval[]: arrayList))*/
-                        if (previousIntervals == null) {
-                            intervalMap.put(e.getKey(), new HashSet<>(Collections.singletonList(interval)));
-                        } else {
-                            previousIntervals.add(interval);
+                        /*do not give parameters interval, e.getKey() returns the varName*/
+                        if (!paramAllocation.keySet().contains(e.getKey())) {
+                            Interval interval = new Interval.CandidateInterval(e.getValue()[0], e.getValue()[1], e.getKey());
+                            candidateIntervals.add((Interval.CandidateInterval) interval);
+                            HashSet<Interval> previousIntervals = intervalMap.get(e.getKey());
+                            /*set up interval Map (varName -> Interval[]: arrayList))*/
+                            if (previousIntervals == null) {
+                                intervalMap.put(e.getKey(), new HashSet<>(Collections.singletonList(interval)));
+                            } else {
+                                previousIntervals.add(interval);
 //                            intervalMap.put(e.getKey(), previousIntervals);
+                            }
+                            removeList.add(e.getKey());
                         }
-                        removeList.add(e.getKey());
-//                        start.remove(e.getKey());
                     }
                 }
                 for (String key : removeList) {
@@ -248,20 +251,7 @@ public class V2VM {
             }
 
             LinearScanRegisterAllocation.AllocationRecord allocationRecord = new LinearScanRegisterAllocation(candidateIntervals).allocate();
-//            for (Map.Entry<Interval, Register> entry : allocationRecord.registerAllocation.entrySet()) {
-//                System.out.println(entry.getKey().toString() + " " + entry.getValue().toString());
-//            }
-//            for (Map.Entry<Interval, String> entry : allocationRecord.memoryAllocation.entrySet()) {
-//                System.out.println(entry.getKey().toString() + " " + entry.getValue().toString());
-//            }
             for (VInstr instr : function.body) {
-                LinkedHashMap<String, String> paramAllocation = new LinkedHashMap<>();
-                for (int i = 0; i < function.params.length; i++) {
-                    paramAllocation.put(function.params[i].toString(), "$a" + i);
-                    if (i >= 4) {
-                        paramAllocation.put(function.params[i].toString(), "in[" + i + "]");
-                    }
-                }
                 MyPara myPara = new MyPara(graph.DFG, intervalMap, allocationRecord.registerAllocation, allocationRecord.memoryAllocation, paramAllocation);
                 instr.accept(myPara, new PrintVisitor());
             }

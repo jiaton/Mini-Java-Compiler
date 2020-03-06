@@ -92,7 +92,6 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 		/*save $t to local*/
 		for (String varName : activeSet) {
 			Interval varInterval = findIntervalOfVar(varName, vCall.sourcePos, myPara.intervalMap); //use vCall.sourcePos here since they are on the same line
-			varInterval = new Interval(varInterval.start, varInterval.end, varName);
 			if (myPara.registerAllocation.get(varInterval) != null) {
 				Register register = myPara.registerAllocation.get(varInterval);
 				if (register.type == 't') {
