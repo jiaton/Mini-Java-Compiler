@@ -240,6 +240,13 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 
 	@Override
 	public MyReturn visit(MyPara myPara, VReturn vReturn) throws Exception {
+		if (vReturn.value == null) {
+			printer.println("ret");
+		} else {
+			Interval varInterval = findIntervalOfVar(vReturn.value.toString(), vReturn.value.sourcePos, myPara.intervalMap);
+			String varReg = findRegOrLocal(varInterval, myPara.registerAllocation, myPara.memoryAllocation, myPara.paramAllocation);
+			printer.println("ret " + varReg);
+		}
 		return null;
 	}
 }
