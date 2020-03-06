@@ -9,11 +9,14 @@ import static java.lang.System.exit;
 
 public class DFGGenerator <MyPara,Sets,Throwable extends java.lang.Throwable> extends VInstr.VisitorPR<MyPara, Sets,Throwable>  {
 
+    public String ident;
     DFGraph DFG = new DFGraph();
+    DFGraph functionGraph = new DFGraph();
     boolean initial = true;
     SourcePos lastpos;
     IdentityHashMap<String,String> inheritTable= new IdentityHashMap<>();  //<sourcePos.toString prenode, label or null(no goto)>
     public HashMap<String, SourcePos> labelTable = new HashMap<>();  //<label, sourcePos>
+
 
     public boolean isInt(String str){
         for(int i = 0; i<str.length();i++){

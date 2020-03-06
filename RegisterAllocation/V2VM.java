@@ -6,7 +6,6 @@ import cs132.vapor.ast.*;
 import cs132.vapor.parser.VaporParser;
 import cs132.vapor.ast.VaporProgram;
 import cs132.vapor.ast.VBuiltIn.Op;
-import sun.awt.image.ImageWatched;
 
 
 import java.io.*;
@@ -82,6 +81,8 @@ public class V2VM {
 
     public static void main(String[] args) throws Exception {
 
+
+
         /*Create graph and sets*/
 
         PrintStream err = new PrintStream(System.out);
@@ -89,10 +90,41 @@ public class V2VM {
         FileInputStream file = new FileInputStream("test.vapor");
         VaporProgram tree = parseVapor(file, err);
         HashMap<String, DFGGenerator> graphTable = new HashMap<>();
+        HashMap<String, HashSet<String>> functionMap = new HashMap<>();
+        HashSet<CallVisitor> callVisitors = new HashSet<>();
+
+        /*funciton map*/
+        for(VFunction function : tree.functions){
+            CallVisitor visitor = new CallVisitor();
+            visitor.ident=function.ident;
+            callVisitors.add(visitor);
+            for (VInstr Instr : function.body){
+                Instr.accept(null,visitor);
+            }
+        }
+        for(CallVisitor v : callVisitors){
+            for(Map.Entry<String, HashSet<String>> entry : (Set<Map.Entry<String, HashSet<String>>>)v.functionMap.entrySet()){
+                if(functionMap.containsKey(entry.getKey())){
+                    for(String s : entry.getValue()){
+                        if(!functionMap.get(entry.getKey()).contains(s)){
+                            functionMap.get(entry.getKey()).add(s);
+                        }
+                    }
+                }else{
+                    functionMap.put(entry.getKey(),new HashSet<>());
+                    for(String s : entry.getValue()){
+                        if(!functionMap.get(entry.getKey()).contains(s)){
+                            functionMap.get(entry.getKey()).add(s);
+                        }
+                    }
+                }
+            }
+        }
 
         //Generation DFG
         for (VFunction function : tree.functions) {
             DFGGenerator graph = new DFGGenerator();
+            graph.ident=function.ident;
             graphTable.put(function.ident, graph);
             for (VCodeLabel label : function.labels) {
                 graph.labelTable.put(label.ident, label.sourcePos);
