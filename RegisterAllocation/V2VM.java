@@ -11,10 +11,14 @@ import cs132.vapor.ast.VBuiltIn.Op;
 import java.io.*;
 import java.util.*;
 
+import static java.lang.System.exit;
+
 
 public class V2VM {
     private Printer printer = new Printer();
-
+    public static VaporProgram tree;
+    public static HashMap<String, HashSet<String>> calleeMap = new HashMap<>();
+    public static HashMap<String, HashSet<String>> callerMap = new HashMap<>();
     public static VaporProgram parseVapor(InputStream in, PrintStream err) throws IOException {
         Op[] ops = {
                 Op.Add, Op.Sub, Op.MulS, Op.Eq, Op.Lt, Op.LtS,
@@ -34,6 +38,31 @@ public class V2VM {
             return null;
         }
         return tree;
+    }
+
+    public static int getInSize(String ident){
+        int paras = 0;
+        for(VFunction function : tree.functions){
+            if(function.ident.equals(ident)){
+                paras=function.params.length;
+            }
+        }
+
+        return paras;
+    }
+
+    public static int getOutSize(String ident){
+        int paras = 0;
+        for(String fstr : callerMap.get(ident)){
+            for(VFunction function : tree.functions) {
+                if (function.ident.equals(fstr)) {
+                    if(paras<function.params.length)
+                        paras = function.params.length;
+                }
+            }
+        }
+
+        return paras;
     }
 
     public static boolean updateSets(Node node) {
@@ -88,9 +117,9 @@ public class V2VM {
         PrintStream err = new PrintStream(System.out);
         //VaporProgram tree = parseVapor(System.in,err);
         FileInputStream file = new FileInputStream("test.vapor");
-        VaporProgram tree = parseVapor(file, err);
+        tree = parseVapor(file, err);
         HashMap<String, DFGGenerator> graphTable = new HashMap<>();
-        HashMap<String, HashSet<String>> functionMap = new HashMap<>();
+
         HashSet<CallVisitor> callVisitors = new HashSet<>();
 
         /*funciton map*/
@@ -103,18 +132,36 @@ public class V2VM {
             }
         }
         for(CallVisitor v : callVisitors){
-            for(Map.Entry<String, HashSet<String>> entry : (Set<Map.Entry<String, HashSet<String>>>)v.functionMap.entrySet()){
-                if(functionMap.containsKey(entry.getKey())){
+            for(Map.Entry<String, HashSet<String>> entry : (Set<Map.Entry<String, HashSet<String>>>)v.calleeMap.entrySet()){
+                if(calleeMap.containsKey(entry.getKey())){
                     for(String s : entry.getValue()){
-                        if(!functionMap.get(entry.getKey()).contains(s)){
-                            functionMap.get(entry.getKey()).add(s);
+                        if(!calleeMap.get(entry.getKey()).contains(s)){
+                            calleeMap.get(entry.getKey()).add(s);
                         }
                     }
                 } else {
-                    functionMap.put(entry.getKey(), new HashSet<>());
+                    calleeMap.put(entry.getKey(), new HashSet<>());
                     for (String s : entry.getValue()) {
-                        if (!functionMap.get(entry.getKey()).contains(s)) {
-                            functionMap.get(entry.getKey()).add(s);
+                        if (!calleeMap.get(entry.getKey()).contains(s)) {
+                            calleeMap.get(entry.getKey()).add(s);
+                        }
+                    }
+                }
+            }
+        }
+        for(CallVisitor v : callVisitors){
+            for(Map.Entry<String, HashSet<String>> entry : (Set<Map.Entry<String, HashSet<String>>>)v.callerMap.entrySet()){
+                if(callerMap.containsKey(entry.getKey())){
+                    for(String s : entry.getValue()){
+                        if(!callerMap.get(entry.getKey()).contains(s)){
+                            callerMap.get(entry.getKey()).add(s);
+                        }
+                    }
+                } else {
+                    callerMap.put(entry.getKey(), new HashSet<>());
+                    for (String s : entry.getValue()) {
+                        if (!callerMap.get(entry.getKey()).contains(s)) {
+                            callerMap.get(entry.getKey()).add(s);
                         }
                     }
                 }
@@ -262,7 +309,7 @@ public class V2VM {
             LinearScanRegisterAllocation.AllocationRecord allocationRecord = new LinearScanRegisterAllocation(candidateIntervals).allocate();
             /*print function name*/
 
-            printer.println("func " + function.ident + "[in 0, out 0, local 0]"); // TODO: 3/6/2020 in out local
+            printer.println("func " + function.ident + "[in "+getInSize(function.ident)+", out "+getOutSize(function.ident)+", local "+allocationRecord.memoryAllocation.size()+"]"); // TODO: 3/6/2020 in out local
             printer.addIndentation();
             /*print labels and instructions*/
             int prevLine = function.sourcePos.line;
