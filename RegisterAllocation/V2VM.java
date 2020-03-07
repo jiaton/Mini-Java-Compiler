@@ -67,13 +67,18 @@ public class V2VM {
 
     public static int getOutSize(String ident){
         int paras = 0;
-        for(String fstr : callerMap.get(ident)){
-            for(VFunction function : tree.functions) {
-                if (function.ident.equals(fstr)) {
-                    if(paras<function.params.length-3)
-                        paras = function.params.length-3;
+        HashSet<String> s;
+        s=callerMap.get(ident);
+        if(s == null){
+            return 0;
+        }
+        for(String fstr : s){
+                for(VFunction function : tree.functions) {
+                    if (function.ident.equals(fstr)) {
+                        if(paras<function.params.length-3)
+                            paras = function.params.length-3;
+                    }
                 }
-            }
         }
         if(paras < 0)   paras = 0;
 
