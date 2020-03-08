@@ -18,16 +18,20 @@ public class CallVisitor <MyPara,Sets,Throwable extends java.lang.Throwable> ext
     public Sets visit(MyPara var1, VCall var2) throws Throwable{
         //set function graph
         if(calleeMap.containsKey(var2.addr.toString())){
-            calleeMap.get(var2.addr.toString()).add(ident);
+            calleeMap.get(var2.addr.toString()).add(":"+ident);
+            //System.out.println(var2.addr.toString()+"  callee   "+":"+ident);
         }else{
             calleeMap.put(var2.addr.toString(),new HashSet<>());
-            calleeMap.get(var2.addr.toString()).add(ident);
+            calleeMap.get(var2.addr.toString()).add(":"+ident);
+            //System.out.println(var2.addr.toString()+"  callee   "+":"+ident);
         }
-        if(callerMap.containsKey(ident)){
-            callerMap.get(ident).add(var2.addr.toString());
+        if(callerMap.containsKey(":"+ident)){
+            callerMap.get(":"+ident).add(var2.addr.toString());
+            //System.out.println(":"+ident+"   caller  "+var2.addr.toString());
         }else{
-            callerMap.put(ident,new HashSet<>());
-            callerMap.get(ident).add(var2.addr.toString());
+            callerMap.put(":"+ident,new HashSet<>());
+            callerMap.get(":"+ident).add(var2.addr.toString());
+            //System.out.println(":"+ident+"   caller  "+var2.addr.toString());
         }
         return null;
     }
