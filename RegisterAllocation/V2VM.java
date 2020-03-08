@@ -17,8 +17,9 @@ import static java.lang.System.exit;
 public class V2VM {
     private Printer printer = new Printer();
     public static VaporProgram tree;
-    public static HashMap<String, HashSet<String>> calleeMap = new HashMap<>();
-    public static HashMap<String, HashSet<String>> callerMap = new HashMap<>();
+    //public static HashMap<String, HashSet<String>> calleeMap = new HashMap<>();
+    //public static HashMap<String, HashSet<String>> callerMap = new HashMap<>();
+    public static HashMap<String, Integer> outValue = new HashMap<>();
     public static VaporProgram parseVapor(InputStream in, PrintStream err) throws IOException {
         Op[] ops = {
                 Op.Add, Op.Sub, Op.MulS, Op.Eq, Op.Lt, Op.LtS,
@@ -67,20 +68,23 @@ public class V2VM {
 
     public static int getOutSize(String ident){
         int paras = 0;
-        HashSet<String> s;
-        s=callerMap.get(ident);
-        if(s == null){
-            return 0;
-        }
-        for(String fstr : s){
-                for(VFunction function : tree.functions) {
-                    if (function.ident.equals(fstr)) {
-                        if(paras<function.params.length-3)
-                            paras = function.params.length-3;
-                    }
-                }
-        }
-        if(paras < 0)   paras = 0;
+//        HashSet<String> s;
+//        s=callerMap.get(ident);
+//        if(s == null){
+//            return 0;
+//        }
+//        for(String fstr : s){
+//                for(VFunction function : tree.functions) {
+//                    //System.out.println(function.ident+"    "+fstr);
+//                    if (function.ident.equals(fstr)) {
+//
+//                        if(paras<function.params.length-3)
+//                            paras = function.params.length-3;
+//                    }
+//                }
+//        }
+//        if(paras < 0)   paras = 0;
+        paras = outValue.get(ident);
 
         return paras;
     }
@@ -150,43 +154,48 @@ public class V2VM {
             for (VInstr Instr : function.body){
                 Instr.accept(null,visitor);
             }
+            outValue.put(function.ident,visitor.argms);
         }
-        for(CallVisitor v : callVisitors){
-            for(Map.Entry<String, HashSet<String>> entry : (Set<Map.Entry<String, HashSet<String>>>)v.calleeMap.entrySet()){
-                if(calleeMap.containsKey(entry.getKey())){
-                    for(String s : entry.getValue()){
-                        if(!calleeMap.get(entry.getKey()).contains(s)){
-                            calleeMap.get(entry.getKey()).add(s);
-                        }
-                    }
-                } else {
-                    calleeMap.put(entry.getKey(), new HashSet<>());
-                    for (String s : entry.getValue()) {
-                        if (!calleeMap.get(entry.getKey()).contains(s)) {
-                            calleeMap.get(entry.getKey()).add(s);
-                        }
-                    }
-                }
-            }
-        }
-        for(CallVisitor v : callVisitors){
-            for(Map.Entry<String, HashSet<String>> entry : (Set<Map.Entry<String, HashSet<String>>>)v.callerMap.entrySet()){
-                if(callerMap.containsKey(entry.getKey())){
-                    for(String s : entry.getValue()){
-                        if(!callerMap.get(entry.getKey()).contains(s)){
-                            callerMap.get(entry.getKey()).add(s);
-                        }
-                    }
-                } else {
-                    callerMap.put(entry.getKey(), new HashSet<>());
-                    for (String s : entry.getValue()) {
-                        if (!callerMap.get(entry.getKey()).contains(s)) {
-                            callerMap.get(entry.getKey()).add(s);
-                        }
-                    }
-                }
-            }
-        }
+//        for(CallVisitor v : callVisitors){
+//            for(Map.Entry<String, HashSet<String>> entry : (Set<Map.Entry<String, HashSet<String>>>)v.calleeMap.entrySet()){
+//                if(calleeMap.containsKey(entry.getKey())){
+//                    for(String s : entry.getValue()){
+//                        if(!calleeMap.get(entry.getKey()).contains(s)){
+//                            calleeMap.get(entry.getKey()).add(s);
+//                            //System.out.println(entry.getKey()+"=========="+s);
+//                        }
+//                    }
+//                } else {
+//                    calleeMap.put(entry.getKey(), new HashSet<>());
+//                    for (String s : entry.getValue()) {
+//                        if (!calleeMap.get(entry.getKey()).contains(s)) {
+//                            calleeMap.get(entry.getKey()).add(s);
+//                            //System.out.println(entry.getKey()+"=========="+s);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//        for(CallVisitor v : callVisitors){
+//            for(Map.Entry<String, HashSet<String>> entry : (Set<Map.Entry<String, HashSet<String>>>)v.callerMap.entrySet()){
+//                if(callerMap.containsKey(entry.getKey())){
+//                    for(String s : entry.getValue()){
+//                        if(!callerMap.get(entry.getKey()).contains(s)){
+//                            callerMap.get(entry.getKey()).add(s);
+//                            //System.out.println(entry.getKey()+"=========="+s);
+//                        }
+//                    }
+//                } else {
+//                    callerMap.put(entry.getKey(), new HashSet<>());
+//                    for (String s : entry.getValue()) {
+//                        if (!callerMap.get(entry.getKey()).contains(s)) {
+//                            callerMap.get(entry.getKey()).add(s);
+//                            //System.out.println(entry.getKey()+"=========="+s);
+//                        }
+//                    }
+//                }
+//            }
+//        }
         Printer printer = new Printer();
         for (VDataSegment dataSegment : tree.dataSegments) {
             printer.println("const " + dataSegment.ident);
