@@ -2,7 +2,6 @@ package RegisterAllocation;
 
 import cs132.util.SourcePos;
 import cs132.vapor.ast.*;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -43,7 +42,7 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 		} else if (intervals == null) { //no interval or parameter
 //            System.err.println("interval of var not found, varName: " + varName + " Pos: " + sourcePos);
 //            return null;
-			System.err.println("interval of var not found or is parameter, varName:" + varName + " Pos: " + sourcePos);
+//			System.err.println("interval of var not found or is parameter, varName:" + varName + " Pos: " + sourcePos);
 			return new Interval(varName); //return varName and check it in findRegOrLocal
 		} else {
 			for (Interval interval : intervals) {
@@ -53,7 +52,7 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 					return interval;
 				}
 			}
-			System.err.println("interval position of var not fit");
+//			System.err.println("interval position of var not fit");
 			return null;
 		}
 
@@ -63,22 +62,15 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 	public MyReturn visit(MyPara myPara, VAssign vAssign) throws Exception {
 		/*replace dest with reg or mem location*/
 		Interval destInterval = findIntervalOfVar(vAssign.dest.toString(), vAssign.dest.sourcePos, myPara.intervalMap);
-		String destVapormName;
-		if (myPara.registerAllocation.get(destInterval) != null) {
-			destVapormName = myPara.registerAllocation.get(destInterval).toString();
-		} else {
-			destVapormName = myPara.memoryAllocation.get(destInterval);
-		}
+
+		String destRegString = findRegOrLocal(destInterval, myPara.registerAllocation, myPara.memoryAllocation, myPara.paramAllocation);
+
 
 		/*replace source with reg or mem location*/
 		Interval sourceInterval = findIntervalOfVar(vAssign.dest.toString(), vAssign.dest.sourcePos, myPara.intervalMap);
-		String sourceVapormName;
-		if (myPara.registerAllocation.get(sourceInterval) != null) {
-			sourceVapormName = myPara.registerAllocation.get(sourceInterval).toString();
-		} else {
-			sourceVapormName = myPara.memoryAllocation.get(sourceInterval);
-		}
-		printer.println(destVapormName + " = " + sourceVapormName);
+		String sourceRegString = findRegOrLocal(sourceInterval, myPara.registerAllocation, myPara.memoryAllocation, myPara.paramAllocation);
+
+		printer.println(destRegString + " = " + sourceRegString);
 
 		return null;
 	}
@@ -172,10 +164,20 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 			Interval destInterval = findIntervalOfVar(vBuiltIn.dest.toString(), vBuiltIn.dest.sourcePos, myPara.intervalMap);
 			String destRegString = findRegOrLocal(destInterval, myPara.registerAllocation, myPara.memoryAllocation, myPara.paramAllocation);
 			if (vBuiltIn.op.numParams > 1) {
-				printer.println(destRegString + " = " + vBuiltIn.op.name + "(" + vBuiltIn.args[0].toString() + " " + vBuiltIn.args[1].toString() + ")");
+				Interval firstInterval = findIntervalOfVar(vBuiltIn.args[0].toString(), vBuiltIn.args[0].sourcePos, myPara.intervalMap);
+				Interval secondInterval = findIntervalOfVar(vBuiltIn.args[1].toString(), vBuiltIn.args[1].sourcePos, myPara.intervalMap);
+				String firstRegString = findRegOrLocal(firstInterval, myPara.registerAllocation, myPara.memoryAllocation, myPara.paramAllocation);
+				String secondRegString = findRegOrLocal(secondInterval, myPara.registerAllocation, myPara.memoryAllocation, myPara.paramAllocation);
+				printer.println(destRegString + " = " + vBuiltIn.op.name + "(" + firstRegString + " " + secondRegString + ")");
 			} else {
-				printer.println(destRegString + " = " + vBuiltIn.op.name + "(" + vBuiltIn.args[0].toString() + ")");
+				Interval firstInterval = findIntervalOfVar(vBuiltIn.args[0].toString(), vBuiltIn.args[0].sourcePos, myPara.intervalMap);
+				String firstRegString = findRegOrLocal(firstInterval, myPara.registerAllocation, myPara.memoryAllocation, myPara.paramAllocation);
+				printer.println(destRegString + " = " + vBuiltIn.op.name + "(" + firstRegString + ")");
 			}
+		} else if (vBuiltIn.op.name.equals("PrintIntS")) { //PrintIntS()
+			Interval firstInterval = findIntervalOfVar(vBuiltIn.args[0].toString(), vBuiltIn.args[0].sourcePos, myPara.intervalMap);
+			String firstRegString = findRegOrLocal(firstInterval, myPara.registerAllocation, myPara.memoryAllocation, myPara.paramAllocation);
+			printer.println(vBuiltIn.op.name + "(" + firstRegString + ")");
 		} else { //Error("bla bla bla")
 			printer.println(vBuiltIn.op.name + "(" + vBuiltIn.args[0] + ")");
 		}
@@ -188,11 +190,13 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 		if (vMemWrite.dest instanceof VMemRef.Global) { //MemRef: Global or Stack
 			Interval destInterval = findIntervalOfVar(((VMemRef.Global) vMemWrite.dest).base.toString(), vMemWrite.dest.sourcePos, myPara.intervalMap);
 			String destRegString = findRegOrLocal(destInterval, myPara.registerAllocation, myPara.memoryAllocation, myPara.paramAllocation);
+			Interval sourceInteravl = findIntervalOfVar(vMemWrite.source.toString(), vMemWrite.source.sourcePos, myPara.intervalMap);
+			String sourceRegString = findRegOrLocal(sourceInteravl, myPara.registerAllocation, myPara.memoryAllocation, myPara.paramAllocation);
 			int byteOffset = ((VMemRef.Global) vMemWrite.dest).byteOffset;
 			if (byteOffset == 0) {
-				printer.println("[" + destRegString + "] = " + vMemWrite.source.toString());
+				printer.println("[" + destRegString + "] = " + sourceRegString);
 			} else {
-				printer.println("[" + destRegString + "+" + byteOffset + "] = " + vMemWrite.source.toString());
+				printer.println("[" + destRegString + "+" + byteOffset + "] = " + sourceRegString);
 			}
 		}
 
@@ -245,7 +249,8 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 		} else {
 			Interval varInterval = findIntervalOfVar(vReturn.value.toString(), vReturn.value.sourcePos, myPara.intervalMap);
 			String varReg = findRegOrLocal(varInterval, myPara.registerAllocation, myPara.memoryAllocation, myPara.paramAllocation);
-			printer.println("ret " + varReg);
+			printer.println("$v0 = " + varReg);
+			printer.println("ret");
 		}
 		return null;
 	}

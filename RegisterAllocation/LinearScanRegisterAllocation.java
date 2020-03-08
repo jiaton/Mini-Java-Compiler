@@ -18,7 +18,7 @@ public class LinearScanRegisterAllocation {
     TreeSet<Interval.CandidateInterval> candidateInvervals;  // in order of increasing start point
     TreeSet<Register> freeRegisterPool = new TreeSet<>();
     LinkedHashMap<Interval, Register> RegisterAllocationRecord = new LinkedHashMap<>();
-    LinkedHashMap<Interval, Integer> local = new LinkedHashMap<>();
+    LinkedHashMap<Interval, Integer> memoryAllocation = new LinkedHashMap<>();
     int locaStackIndex = 0;
 
     public LinearScanRegisterAllocation(TreeSet<Interval.CandidateInterval> candidateInvervals) {
@@ -54,11 +54,11 @@ public class LinearScanRegisterAllocation {
         Interval spill = active.last();
         if (spill.getEnd() > interval.getEnd()) {
             RegisterAllocationRecord.put(interval, RegisterAllocationRecord.get(spill));
-            local.put(spill, locaStackIndex++);
+            memoryAllocation.put(spill, locaStackIndex++);
             active.remove(spill);
             active.add(new Interval.ActiveInterval(interval));
         } else {
-            local.put(interval, locaStackIndex++);
+            memoryAllocation.put(interval, locaStackIndex++);
         }
     }
 
@@ -77,7 +77,7 @@ public class LinearScanRegisterAllocation {
         }
         /*add all of the spilled intervals in local to LocalAllocationRecord*/
         LinkedHashMap<Interval, String> localAllocationRecord = new LinkedHashMap<>();
-        for (Map.Entry<Interval, Integer> entry : local.entrySet()) {
+        for (Map.Entry<Interval, Integer> entry : memoryAllocation.entrySet()) {
             localAllocationRecord.put(entry.getKey(), "local[" + entry.getValue() + "]");
         }
         return new AllocationRecord(RegisterAllocationRecord, localAllocationRecord);
