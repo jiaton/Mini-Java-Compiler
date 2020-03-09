@@ -37,6 +37,9 @@ public class DFGGenerator <MyPara,Sets,Throwable extends java.lang.Throwable> ex
 			}
 
 		}
+		if(f){
+		    varTable.add(var);
+        }
 		return varTable;
 	}
 
