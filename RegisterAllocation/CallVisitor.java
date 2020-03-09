@@ -52,7 +52,9 @@ public class CallVisitor <MyPara,Sets,Throwable extends java.lang.Throwable> ext
 //            callerMap.get(":"+source).add(dest);
 //            System.out.println(":"+source+"   caller  "+dest);
 //        }
-        if(var2.args.length>0)  argms = var2.args.length;
+        if (var2.args.length > argms) {
+            argms = var2.args.length;
+        }
         return null;
     }
 

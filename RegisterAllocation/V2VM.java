@@ -345,7 +345,7 @@ public class V2VM {
             /*print function name*/
 
 //            printer.println("func " + function.ident + "[in "+getInSize(function.ident)+", out "+getOutSize(function.ident)+", local "+allocationRecord.memoryAllocation.size()+17+"]"); // TODO: 3/6/2020 in out local
-            printer.println("func " + function.ident + "[in " + 0 + ", out " + 0 + ", local " + 17 + "]"); // TODO: 3/8/2020 change the local later
+            printer.println("func " + function.ident + "[in " + getInSize(function.ident) + ", out " + getOutSize(function.ident) + ", local " + 17 + "]"); // TODO: 3/8/2020 change the local later
 
             printer.addIndentation();
             /*print labels and instructions*/
