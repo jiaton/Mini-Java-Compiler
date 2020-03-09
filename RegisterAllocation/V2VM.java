@@ -134,7 +134,7 @@ public class V2VM {
 
     public static void main(String[] args) throws Exception {
 
-
+        HashMap<String, DFGGenerator> mTable=new HashMap<>();
 
         /*Create graph and sets*/
 
@@ -156,6 +156,7 @@ public class V2VM {
             }
             outValue.put(function.ident,visitor.argms);
         }
+
 //        for(CallVisitor v : callVisitors){
 //            for(Map.Entry<String, HashSet<String>> entry : (Set<Map.Entry<String, HashSet<String>>>)v.calleeMap.entrySet()){
 //                if(calleeMap.containsKey(entry.getKey())){
@@ -209,6 +210,7 @@ public class V2VM {
         //Generation DFG
         for (VFunction function : tree.functions) {
             DFGGenerator graph = new DFGGenerator();
+            mTable.put(function.ident,graph);
             graph.ident = function.ident;
             graphTable.put(function.ident, graph);
             for (VCodeLabel label : function.labels) {
@@ -225,11 +227,15 @@ public class V2VM {
 //                            if(entry2.getValue()!=null){
 //                                System.out.println(entry2.getKey()+":"+entry2.getValue()+" "+entry.getKey());
 //                            }
-                            if (entry2.getValue() != null && entry2.getValue().equals(":" + entry.getKey())) {
+//                            if(entry2.getKey()!=null){
+//                                System.out.println("hhhhhhhhhhhhhhhhhh"+" "+entry2.getValue()+" "+entry.getKey());
+//                            }
+                            if (entry2.getValue() != null && (entry2.getValue().equals(":" + entry.getKey())||entry2.getValue().equals(entry.getKey()))) {
                                 //System.out.println("add "+entry2.getKey()+"->"+thisnode.sourcePos.toString());
                                 Node succnode = graph.DFG.getNode(entry2.getKey());
                                 thisnode.addPre(succnode);
                                 succnode.addSucc(thisnode);
+                                //System.out.println("0000000000000000000"+"     for label "+entry.getKey()+" "+succnode.sourcePos+" to "+thisnode.sourcePos);
                             }
                         }
                         break;
@@ -359,7 +365,7 @@ public class V2VM {
             }
             Printer.resetIndentation();
         }
-
+        System.out.print("");
 
     }
 }
