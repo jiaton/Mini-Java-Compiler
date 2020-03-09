@@ -214,7 +214,7 @@ public class DFGGenerator <MyPara,Sets,Throwable extends java.lang.Throwable> ex
         if (!isInt(var2.source.toString()) && !isMessage(var2.source.toString()) && var2.source.toString().charAt(0) != ':')
             thisnode.sets.addUse(var2.source.toString());
         if (var2.dest != null) {
-            thisnode.sets.addDef(((VMemRef.Global) var2.dest).base.toString());
+            thisnode.sets.addUse(((VMemRef.Global) var2.dest).base.toString());
         }
         return null;
     }

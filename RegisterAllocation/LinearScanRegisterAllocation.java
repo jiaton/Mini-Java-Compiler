@@ -42,7 +42,7 @@ public class LinearScanRegisterAllocation {
         Iterator<Interval.ActiveInterval> iterator = active.iterator();
         while (iterator.hasNext()) {
             Interval j = iterator.next();
-            if (j.end.line > interval.start.line) {
+            if (j.end.line >= interval.start.line) {
                 return;
             }
             freeRegisterPool.add(RegisterAllocationRecord.get(j));
