@@ -16,6 +16,29 @@ public class DFGGenerator <MyPara,Sets,Throwable extends java.lang.Throwable> ex
     SourcePos lastpos;
     IdentityHashMap<String,String> inheritTable= new IdentityHashMap<>();  //<sourcePos.toString prenode, label or null(no goto)>
     public HashMap<String, SourcePos> labelTable = new HashMap<>();  //<label, sourcePos>
+    	public HashSet<String> getStrVariable(String s){
+		boolean f = false;
+		String var = "";
+		HashSet<String> varTable = new HashSet<>();
+		for(int i = 0;i < s.length();i++){
+			char c = s.charAt(i);
+			if(!f){
+				if(!(c==' '||c=='['||c==']'||c=='0'||c=='1'||c=='2'||c=='3'||c=='4'||c=='5'||c=='6'||c=='7'||c=='8'||c=='9')){
+					f = true;
+				}
+			}else{
+				if(!(c=='['||c==']'||c==' '))
+					var = var + c;
+				else{
+					varTable.add(var);
+					var = "";
+					f = false;
+				}
+			}
+
+		}
+		return varTable;
+	}
 
 
     public boolean isInt(String str){
