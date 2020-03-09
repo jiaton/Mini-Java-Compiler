@@ -135,14 +135,15 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 		String addrReg = findRegOrLocal(addrInterval, myPara.registerAllocation, myPara.memoryAllocation, myPara.paramAllocation);
 		printer.println("call " + addrReg);
 
-		Interval destInterval = findIntervalOfVar(vCall.dest.toString(), vCall.dest.sourcePos, myPara.intervalMap);
-		String destReg = findRegOrLocal(destInterval, myPara.registerAllocation, myPara.memoryAllocation, myPara.paramAllocation);
-		printer.println(destReg + " = " + "$v0");
-
 		/*restore $t regs*/
 		for (Map.Entry<String, String> entry : save$tMap.entrySet()) {
 			printer.println(entry.getKey() + " = " + entry.getValue());
 		}
+
+		/*receive return value*/
+		Interval destInterval = findIntervalOfVar(vCall.dest.toString(), vCall.dest.sourcePos, myPara.intervalMap);
+		String destReg = findRegOrLocal(destInterval, myPara.registerAllocation, myPara.memoryAllocation, myPara.paramAllocation);
+		printer.println(destReg + " = " + "$v0");
 
 		for (int i = 0; i < myPara.paramAllocation.size(); i++) {
 //			printer.println("$a" + i + " = in[" + i + "]"); todo: change here
