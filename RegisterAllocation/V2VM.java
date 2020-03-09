@@ -49,7 +49,7 @@ public class V2VM {
             }
         }
 
-        return paras;
+        return Math.max(paras - 4, 0);
     }
 
 //    public static int getOutSize(String ident){
@@ -86,7 +86,7 @@ public class V2VM {
 //        if(paras < 0)   paras = 0;
         paras = outValue.get(ident);
 
-        return paras;
+        return Math.max(paras, 4);
     }
 
     public static boolean updateSets(Node node) {

@@ -97,7 +97,7 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 		}
 		/*backup previous $a*/
 		for (int i = 0; i < myPara.paramAllocation.size(); i++) {
-			printer.println("in[" + i + "] = $a" + i); //todo change here
+			printer.println("out[" + i + "] = $a" + i); //todo change here
 		}
 
 		/*set $a, if more than 4, set out[]*/
@@ -146,7 +146,7 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 		printer.println(destReg + " = " + "$v0");
 
 		for (int i = 0; i < myPara.paramAllocation.size(); i++) {
-			printer.println("$a" + i + " = in[" + i + "]"); //todo: change here
+			printer.println("$a" + i + " = out[" + i + "]"); //todo: change here
 		}
 
 		return null;
