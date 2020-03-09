@@ -215,6 +215,9 @@ public class DFGGenerator <MyPara,Sets,Throwable extends java.lang.Throwable> ex
     public Sets visit(MyPara var1, VMemRead var2) throws Throwable{
         nodeSetupNoGoto(var2);
         Node thisnode = DFG.getNode(var2.sourcePos.toString());
+        for(String var : getStrVariable(var2.source.toString())){
+            thisnode.sets.addUse(var);
+        }
         if(var2.dest!=null){
             thisnode.sets.addDef(var2.dest.toString());
     }
