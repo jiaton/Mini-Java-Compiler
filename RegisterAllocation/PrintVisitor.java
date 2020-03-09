@@ -52,7 +52,7 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 					return interval;
 				}
 			}
-//			System.err.println("interval position of var not fit");
+			System.err.println("interval position of var not fit");
 			return null;
 		}
 
@@ -67,7 +67,7 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 
 
 		/*replace source with reg or mem location*/
-		Interval sourceInterval = findIntervalOfVar(vAssign.dest.toString(), vAssign.dest.sourcePos, myPara.intervalMap);
+		Interval sourceInterval = findIntervalOfVar(vAssign.source.toString(), vAssign.dest.sourcePos, myPara.intervalMap);
 		String sourceRegString = findRegOrLocal(sourceInterval, myPara.registerAllocation, myPara.memoryAllocation, myPara.paramAllocation);
 
 		printer.println(destRegString + " = " + sourceRegString);
@@ -97,7 +97,7 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 		}
 		/*backup previous $a*/
 		for (int i = 0; i < myPara.paramAllocation.size(); i++) {
-			printer.println("in[" + i + "] = $a" + i);
+//			printer.println("in[" + i + "] = $a" + i); todo change here
 		}
 
 		/*set $a, if more than 4, set out[]*/
@@ -145,7 +145,7 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 		}
 
 		for (int i = 0; i < myPara.paramAllocation.size(); i++) {
-			printer.println("$a" + i + " = in[" + i + "]");
+//			printer.println("$a" + i + " = in[" + i + "]"); todo: change here
 		}
 
 		return null;
