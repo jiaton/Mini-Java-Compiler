@@ -339,6 +339,13 @@ public class V2VM {
                 for (String key : removeList) {
                     start.remove(key);
                 }
+                SetGotoIntervalVisitor visitor = new SetGotoIntervalVisitor();
+                visitor.intervalMap = intervalMap;
+                visitor.DFG = graph.DFG;
+                for (VInstr Instr : function.body){
+                    Instr.accept(null,visitor);
+                }
+                intervalMap = visitor.intervalMap;
             }
 
             LinearScanRegisterAllocation.AllocationRecord allocationRecord = new LinearScanRegisterAllocation(candidateIntervals).allocate();
