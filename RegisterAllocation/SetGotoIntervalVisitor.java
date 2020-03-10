@@ -97,43 +97,49 @@ public class SetGotoIntervalVisitor <MyPara,Sets,Throwable extends java.lang.Thr
         Node thisnode = DFG.getNode(var2.sourcePos.toString());
 
         for(String var : thisnode.sets.active){
-            HashSet<Interval> intervalset = intervalMap.get(var);
-            HashSet<Interval> temp = new HashSet<>();
-            for(Map.Entry<String,Node> succEntry : thisnode.relatednodes.succNodes.entrySet()){
-                Node succ = succEntry.getValue();
-                if(succ.sets.active.contains(var)){
-                    for(Interval interval : intervalset){
-                        if(interval.start.line<=succ.sourcePos.line&&interval.end.line>=succ.sourcePos.line){
-                            temp.add(interval);
-                        }else if(interval.start.line<=thisnode.sourcePos.line&&interval.end.line>=thisnode.sourcePos.line){
-                            temp.add(interval);
+            if(intervalMap!=null){
+                HashSet<Interval> intervalset = intervalMap.get(var);
+                if(intervalset != null){
+                    HashSet<Interval> temp = new HashSet<>();
+                    for(Map.Entry<String,Node> succEntry : thisnode.relatednodes.succNodes.entrySet()){
+                        Node succ = succEntry.getValue();
+                        if(succ.sets.active.contains(var)){
+                            for(Interval interval : intervalset){
+                                if(interval.start.line<=succ.sourcePos.line&&interval.end.line>=succ.sourcePos.line){
+                                    temp.add(interval);
+                                }else if(interval.start.line<=thisnode.sourcePos.line&&interval.end.line>=thisnode.sourcePos.line){
+                                    temp.add(interval);
+                                }
+                            }
                         }
                     }
-                }
-            }
-            for(Interval i : temp){
-                intervalset.remove(i);
-            }
-            SourcePos start = null;
-            SourcePos end = null;
-            for(Interval i :temp){
-                start = i.start;
-                end = i.end;
-            }
-            if(start!=null&&end!=null){
-                for(Interval i : temp){
-                    if(i.start.line<=start.line){
-                        start=i.start;
+                    for(Interval i : temp){
+                        intervalset.remove(i);
                     }
-                    if(i.end.line>=end.line){
+                    SourcePos start = null;
+                    SourcePos end = null;
+                    for(Interval i :temp){
+                        start = i.start;
                         end = i.end;
                     }
+                    if(start!=null&&end!=null){
+                        for(Interval i : temp){
+                            if(i.start.line<=start.line){
+                                start=i.start;
+                            }
+                            if(i.end.line>=end.line){
+                                end = i.end;
+                            }
+                        }
+                        Interval newinterval = new Interval(start,end,var);
+                        intervalset.add(newinterval);
+                        intervalMap.remove(var);
+                        intervalMap.put(var,intervalset);
+                    }
                 }
-                Interval newinterval = new Interval(start,end,var);
-                intervalset.add(newinterval);
-                intervalMap.remove(var);
-                intervalMap.put(var,intervalset);
+
             }
+
 
         }
         return null;
