@@ -154,15 +154,15 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 		for (Map.Entry<String, String> entry : save$tMap.entrySet()) {
 			printer.println(entry.getKey() + " = " + entry.getValue());
 		}
+		for (int i = 0; i < Math.min(myPara.paramAllocation.size(), 4); i++) {
+			printer.println("$a" + i + " = " + save$aMap.get("$a" + i)); //todo: change here
+		}
 
 		/*receive return value*/
 		Interval destInterval = findIntervalOfVar(vCall.dest.toString(), vCall.dest.sourcePos, myPara.intervalMap);
 		String destReg = findRegOrLocal(destInterval, myPara.registerAllocation, myPara.memoryAllocation, myPara.paramAllocation);
 		printer.println(destReg + " = " + "$v0");
 
-		for (int i = 0; i < Math.min(myPara.paramAllocation.size(), 4); i++) {
-			printer.println("$a" + i + " = " + save$aMap.get("$a" + i)); //todo: change here
-		}
 
 		return null;
 	}
