@@ -32,6 +32,11 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 			reg = null;
 			System.err.println("error: no reg found");
 		}
+		/*check if temporal register needed.*/
+		if (reg.matches("in\\[.*") || reg.matches("out\\[.*") || reg.matches("local\\[.*")) {
+			printer.println("$v1 = " + reg);
+			reg = "$v1";
+		}
 		return reg;
 	}
 
@@ -88,6 +93,7 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 				Register register = myPara.registerAllocation.get(varInterval);
 				if (register.type == 't') {
 					save$tMap.put(register.toString(), "local[" + localIndex++ + "]");
+//					myPara.memoryAllocation.put(new Interval(register.toString()), "local[" + localIndex++ + "]");
 				}
 			}
 		}
@@ -96,18 +102,24 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 			printer.println(entry.getValue() + " = " + entry.getKey());
 		}
 		/*backup previous $a*/
-		for (int i = 0; i < myPara.paramAllocation.size(); i++) {
-			printer.println("out[" + i + "] = $a" + i); //todo change here
+		LinkedHashMap<String, String> save$aMap = new LinkedHashMap<>();
+		for (int i = 0; i < Math.min(myPara.paramAllocation.size(), 4); i++) {
+			save$aMap.put("$a" + i, "local[" + localIndex + "]");
+//			myPara.memoryAllocation.put(new Interval("$a" + i), "local[" + localIndex + "]");
+			printer.println("local[" + localIndex++ + "] = $a" + i); //todo change here
 		}
 
 		/*set $a, if more than 4, set out[]*/
-		LinkedHashMap<String, String> save$aMap = new LinkedHashMap<>();
+
 		if (vCall.args.length <= 4) {
 			for (int i = 0; i < vCall.args.length; i++) {
 				Interval varInterval = findIntervalOfVar(vCall.args[i].toString(), vCall.args[i].sourcePos, myPara.intervalMap);
 				String reg = findRegOrLocal(varInterval, myPara.registerAllocation, myPara.memoryAllocation, myPara.paramAllocation);
 				if (reg == null) {
 					printer.println("error reg is null");
+				}
+				if (reg.matches("^\\$a.*")) { //if previous parameter is needed, use out[] instead
+					reg = save$aMap.get(reg);
 				}
 				printer.println("$a" + i + " = " + reg);
 			}
@@ -119,10 +131,13 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 				if (reg == null) {
 					printer.println("error reg is null");
 				}
+				if (reg.matches("^\\$a.*")) { //if previous parameter is needed, use out[] instead
+					reg = save$aMap.get(reg);
+				}
 				printer.println("$a" + i + " = " + reg);
 			}
 			for (int i = 0; i < vCall.args.length - 4; i++) {
-				Interval varInterval = findIntervalOfVar(vCall.args[i].toString(), vCall.args[i].sourcePos, myPara.intervalMap);
+				Interval varInterval = findIntervalOfVar(vCall.args[i + 4].toString(), vCall.args[i + 4].sourcePos, myPara.intervalMap);
 				String reg = findRegOrLocal(varInterval, myPara.registerAllocation, myPara.memoryAllocation, myPara.paramAllocation);
 				if (reg == null) {
 					printer.println("error reg is null");
@@ -145,8 +160,8 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 		String destReg = findRegOrLocal(destInterval, myPara.registerAllocation, myPara.memoryAllocation, myPara.paramAllocation);
 		printer.println(destReg + " = " + "$v0");
 
-		for (int i = 0; i < myPara.paramAllocation.size(); i++) {
-			printer.println("$a" + i + " = out[" + i + "]"); //todo: change here
+		for (int i = 0; i < Math.min(myPara.paramAllocation.size(), 4); i++) {
+			printer.println("$a" + i + " = " + save$aMap.get("$a" + i)); //todo: change here
 		}
 
 		return null;

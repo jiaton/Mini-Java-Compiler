@@ -303,7 +303,7 @@ public class V2VM {
             for (int i = 0; i < function.params.length; i++) {
                 paramAllocation.put(function.params[i].toString(), "$a" + i);
                 if (i >= 4) {
-                    paramAllocation.put(function.params[i].toString(), "in[" + i + "]");
+                    paramAllocation.put(function.params[i].toString(), "in[" + (i - 4) + "]");
                 }
             }
 
@@ -323,7 +323,7 @@ public class V2VM {
                         /*do not give parameters interval, e.getKey() returns the varName*/
                         if (!paramAllocation.keySet().contains(e.getKey())) {
                             Interval interval = new Interval.CandidateInterval(e.getValue()[0], e.getValue()[1], e.getKey());
-                            candidateIntervals.add((Interval.CandidateInterval) interval);
+//                            candidateIntervals.add((Interval.CandidateInterval) interval);
                             HashSet<Interval> previousIntervals = intervalMap.get(e.getKey());
                             /*set up interval Map (varName -> Interval[]: arrayList))*/
                             if (previousIntervals == null) {
@@ -342,12 +342,35 @@ public class V2VM {
                 SetGotoIntervalVisitor visitor = new SetGotoIntervalVisitor();
                 visitor.intervalMap = intervalMap;
                 visitor.DFG = graph.DFG;
-                for (VInstr Instr : function.body){
-                    Instr.accept(null,visitor);
+                for (VInstr Instr : function.body) {
+                    Instr.accept(null, visitor);
                 }
                 intervalMap = visitor.intervalMap;
             }
-
+            for (Map.Entry<String, HashSet<Interval>> entry : intervalMap.entrySet()) {
+                for (Interval interval : entry.getValue()) {
+                    Interval.CandidateInterval candidateInterval = new Interval.CandidateInterval(interval.start, interval.end, interval.varName);
+                    candidateIntervals.add((Interval.CandidateInterval) candidateInterval);
+                }
+            }
+//            for (Map.Entry<String, HashSet<Interval>> entry : intervalMap.entrySet()) {
+//
+//                HashSet<Interval> intervals = entry.getValue();
+//                if (intervals.size() == 1) {
+//                    continue;
+//                }
+//
+//                for (Interval interval : intervals) {
+//                    for (VInstr instr : function.body) {
+//                        MyPara myPara = new MyPara(graph.DFG, intervalMap, allocationRecord.registerAllocation, allocationRecord.memoryAllocation, paramAllocation);
+//
+//                        instr.accept(myPara, new findGotoVisitor extends  VInstr.VisitorPR<MyPara, MyReturn, Exception>(myPara){
+//
+//                        });
+//
+//                    }
+//                }
+//            }
             LinearScanRegisterAllocation.AllocationRecord allocationRecord = new LinearScanRegisterAllocation(candidateIntervals).allocate();
             /*print function name*/
 
