@@ -125,6 +125,14 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 			}
 		}
 		if (vCall.args.length > 4) {
+			for (int i = 0; i < vCall.args.length - 4; i++) {
+				Interval varInterval = findIntervalOfVar(vCall.args[i + 4].toString(), vCall.args[i + 4].sourcePos, myPara.intervalMap);
+				String reg = findRegOrLocal(varInterval, myPara.registerAllocation, myPara.memoryAllocation, myPara.paramAllocation);
+				if (reg == null) {
+					printer.println("error reg is null");
+				}
+				printer.println("out[" + i + "] = " + reg);
+			}
 			for (int i = 0; i < 4; i++) {
 				Interval varInterval = findIntervalOfVar(vCall.args[i].toString(), vCall.args[i].sourcePos, myPara.intervalMap);
 				String reg = findRegOrLocal(varInterval, myPara.registerAllocation, myPara.memoryAllocation, myPara.paramAllocation);
@@ -135,14 +143,6 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 					reg = save$aMap.get(reg);
 				}
 				printer.println("$a" + i + " = " + reg);
-			}
-			for (int i = 0; i < vCall.args.length - 4; i++) {
-				Interval varInterval = findIntervalOfVar(vCall.args[i + 4].toString(), vCall.args[i + 4].sourcePos, myPara.intervalMap);
-				String reg = findRegOrLocal(varInterval, myPara.registerAllocation, myPara.memoryAllocation, myPara.paramAllocation);
-				if (reg == null) {
-					printer.println("error reg is null");
-				}
-				printer.println("out[" + i + "] = " + reg);
 			}
 		}
 		/*print call*/
