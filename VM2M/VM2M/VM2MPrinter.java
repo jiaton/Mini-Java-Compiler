@@ -132,9 +132,18 @@ public class VM2MPrinter<MyPara, Sets, Throwable extends java.lang.Throwable> ex
 		return null;
 	}
 
+	public boolean isReg(String str){
+		if(str.charAt(0)=='$')	return true;
+		else	return false;
+	}
 	public Sets visit(MyPara var1, VCall var2) throws Throwable {
 		PrintLabel(var2.sourcePos);
-		printer.println("jalr " + var2.addr.toString());
+		if(isReg(var2.addr.toString())){
+			printer.println("jalr " + var2.addr.toString());
+		}else{
+			printer.println("jal " + NoColon(var2.addr.toString()));
+		}
+
 		return null;
 	}
 
