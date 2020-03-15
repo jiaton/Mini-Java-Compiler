@@ -223,7 +223,7 @@ public class VM2MPrinter<MyPara, Sets, Throwable extends java.lang.Throwable> ex
 			if(IsDigit(var2.args[0].toString())){
 				printer.println("li $a0 " + var2.args[0].toString());
 				printer.println("jal _heapAlloc");
-				printer.println("move $t0 $v0");
+				printer.println("move " + var2.dest.toString() + " $v0");
 			}else{
 				printer.println("move $a0 " + var2.args[0].toString());
 				printer.println("jal _heapAlloc");
