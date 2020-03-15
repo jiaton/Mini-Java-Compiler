@@ -8,10 +8,7 @@ import cs132.vapor.ast.VBuiltIn.Op;
 import cs132.vapor.ast.VOperand.Static;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 
 public class VM2M {
@@ -104,21 +101,21 @@ public class VM2M {
     }
 
     public static void main(String[] args) throws IOException {
-        HashMap< SourcePos,String> labelMap = new HashMap<>();
+        LinkedHashMap<SourcePos, String> labelMap = new LinkedHashMap<>();
         PrintStream err = new PrintStream(System.out);
         VaporProgram tree; //= parseVapor(System.in,err);
-        FileInputStream file = new FileInputStream("test.vapor");
-        tree = parseVapor(file, err);
-        VM2MPrinter visitor= new VM2MPrinter();
-        visitor.printer=printer;
+        FileInputStream in = new FileInputStream(new File("VM2M/VM2M/test.vaporm"));
+        tree = parseVapor(in, err);
+        VM2MPrinter visitor = new VM2MPrinter();
+        visitor.printer = printer;
         printer.println(".data");
         printer.println();
         printer.addIndentation();
-        for(VDataSegment data :tree.dataSegments){
+        for (VDataSegment data : tree.dataSegments) {
             printer.removeIndentation();
-            printer.println(data.ident+":");
+            printer.println(data.ident + ":");
             printer.addIndentation();
-            for(Static s :data.values){
+            for (Static s : data.values) {
                 printer.println(NoColon(s.toString()));
             }
         }
