@@ -156,9 +156,9 @@ public class VM2MPrinter<MyPara, Sets, Throwable extends java.lang.Throwable> ex
 				first = "$t9";
 				printer.println("li $t9 "+var2.args[0].toString());
 			}else if(IsDigit(var2.args[1].toString())){
-				next = "t9";
+				next = "$t9";
 				first = var2.args[0].toString();
-				printer.println("li $t9 "+var2.args[1].toString());
+				printer.println("li $t9 " + var2.args[1].toString());
 			}else {
 				next = var2.args[1].toString();
 				first = var2.args[0].toString();
@@ -258,8 +258,11 @@ public class VM2MPrinter<MyPara, Sets, Throwable extends java.lang.Throwable> ex
 			if (source.matches("^:.*")) {
 				printer.println("la $t9 " + NoColon(source));
 				printer.println("sw $t9 " + NoColon(dest));
-			} else if (source.matches("\\d+")) { // TODO: 3/15/2020 number or just only "0"?
+			} else if (source.equals("0")) {
 				printer.println("sw " + "$" + source + " " + NoColon(dest));
+			} else if (source.matches("\\d+")) {
+				printer.println("li $t9 " + source);
+				printer.println("sw " + "$t9" + " " + NoColon(dest));
 			} else {
 				printer.println("sw " + source + " " + NoColon(dest));
 			}
@@ -271,8 +274,11 @@ public class VM2MPrinter<MyPara, Sets, Throwable extends java.lang.Throwable> ex
 			if (source.matches("^:.*")) {
 				printer.println("la $t9 " + NoColon(source));
 				printer.println("sw $s0 " + NoColon(dest));
-			} else if (source.matches("\\d+")) { // TODO: 3/15/2020 number or just only "0"?
+			} else if (source.equals("0")) {
 				printer.println("sw " + "$" + source + " " + NoColon(dest));
+			} else if (source.matches("\\d+")) {
+				printer.println("li $t9 " + source);
+				printer.println("sw " + "$t9" + " " + NoColon(dest));
 			} else {
 				printer.println("sw " + source + " " + NoColon(dest));
 			}
