@@ -150,7 +150,20 @@ public class VM2MPrinter<MyPara, Sets, Throwable extends java.lang.Throwable> ex
 	public Sets visit(MyPara var1, VBuiltIn var2) throws Throwable {
 		PrintLabel(var2.sourcePos);
 		if (var2.op.name.equals("Add")) {
-			printer.println("addu " + var2.dest.toString() + " " + var2.args[0].toString() + " " + var2.args[1].toString());
+			String first,next;
+			if(IsDigit(var2.args[0].toString())){
+				next = var2.args[1].toString();
+				first = "$t9";
+				printer.println("li $t9 "+var2.args[0].toString());
+			}else if(IsDigit(var2.args[1].toString())){
+				next = "t9";
+				first = var2.args[0].toString();
+				printer.println("li $t9 "+var2.args[1].toString());
+			}else {
+				next = var2.args[1].toString();
+				first = var2.args[0].toString();
+			}
+			printer.println("addu " + var2.dest.toString() + " " + first + " " + next);
 		} else if (var2.op.name.equals("And")) {
 
 		} else if (var2.op.name.equals("Sub")) {
@@ -165,13 +178,18 @@ public class VM2MPrinter<MyPara, Sets, Throwable extends java.lang.Throwable> ex
 			}
 		} else if (var2.op.name.equals("MulS")) {
 			String first,next;
-			if(IsDigit(var2.args[0].toString())){
+			if(IsDigit(var2.args[0].toString())&&IsDigit(var2.args[1].toString())){
+				printer.println("li "+var2.dest.toString()+" "+Integer.parseInt(var2.args[0].toString())*Integer.parseInt(var2.args[1].toString()));
+				return null;
+			}
+			else if(IsDigit(var2.args[0].toString())){
 				next = var2.args[0].toString();
 				first = var2.args[1].toString();
 			}else if(IsDigit(var2.args[1].toString())){
 				next = var2.args[1].toString();
 				first = var2.args[0].toString();
-			}else {
+			}
+			else {
 				next = var2.args[0].toString();
 				first = var2.args[1].toString();
 			}
@@ -181,7 +199,20 @@ public class VM2MPrinter<MyPara, Sets, Throwable extends java.lang.Throwable> ex
 		} else if (var2.op.name.equals("Eq")) {
 
 		} else if (var2.op.name.equals("Lt")) {
-			printer.println("sltu " + var2.dest.toString() + " " + var2.args[0].toString() + " " + var2.args[1].toString());
+			String first,next;
+			if(IsDigit(var2.args[0].toString())){
+				next = var2.args[1].toString();
+				first = "$t9";
+				printer.println("li $t9 "+var2.args[0].toString());
+			}else if(IsDigit(var2.args[1].toString())){
+				next = "t9";
+				first = var2.args[0].toString();
+				printer.println("li $t9 "+var2.args[1].toString());
+			}else {
+				next = var2.args[1].toString();
+				first = var2.args[0].toString();
+			}
+			printer.println("sltu " + var2.dest.toString() + " " + first + " " + next);
 		} else if (var2.op.name.equals("LtS")) {
 			if (var2.args[0].toString().matches("\\d+") || var2.args[1].toString().matches("\\d+")) {
 				printer.println("slti " + var2.dest.toString() + " " + var2.args[0].toString() + " " + var2.args[1].toString());
