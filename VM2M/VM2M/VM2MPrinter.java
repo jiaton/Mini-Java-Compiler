@@ -164,7 +164,18 @@ public class VM2MPrinter<MyPara, Sets, Throwable extends java.lang.Throwable> ex
 				printer.println("subu " + var2.dest.toString() + " " + var2.args[0].toString() + " " + var2.args[1].toString());
 			}
 		} else if (var2.op.name.equals("MulS")) {
-			printer.println("mul " + var2.dest.toString() + " " + var2.args[0].toString() + " " + var2.args[1].toString());
+			String first,next;
+			if(IsDigit(var2.args[0].toString())){
+				next = var2.args[0].toString();
+				first = var2.args[1].toString();
+			}else if(IsDigit(var2.args[1].toString())){
+				next = var2.args[1].toString();
+				first = var2.args[0].toString();
+			}else {
+				next = var2.args[0].toString();
+				first = var2.args[1].toString();
+			}
+			printer.println("mul " + var2.dest.toString() + " " + first + " " + next);
 		} else if (var2.op.name.equals("DivS")) {
 
 		} else if (var2.op.name.equals("Eq")) {
@@ -178,9 +189,16 @@ public class VM2MPrinter<MyPara, Sets, Throwable extends java.lang.Throwable> ex
 				printer.println("slt " + var2.dest.toString() + " " + var2.args[0].toString() + " " + var2.args[1].toString());
 			}
 		} else if (var2.op.name.equals("HeapAllocZ")) {
-			printer.println("li $a0 " + var2.args[0].toString());
-			printer.println("jal _heapAlloc");
-			printer.println("move $t0 $v0");
+			if(IsDigit(var2.args[0].toString())){
+				printer.println("li $a0 " + var2.args[0].toString());
+				printer.println("jal _heapAlloc");
+				printer.println("move $t0 $v0");
+			}else{
+				printer.println("move $a0 " + var2.args[0].toString());
+				printer.println("jal _heapAlloc");
+				printer.println("move "+var2.dest.toString()+" $v0");
+			}
+
 		} else if (var2.op.name.equals("Error")) {
 			printer.println("la $a0 _str" + strnum);
 			strMap.put(strnum, var2.args[0].toString());
