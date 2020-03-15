@@ -163,7 +163,11 @@ public class VM2MPrinter<MyPara, Sets, Throwable extends java.lang.Throwable> ex
 		} else if (var2.op.name.equals("Lt")) {
 			printer.println("sltu " + var2.dest.toString() + " " + var2.args[0].toString() + " " + var2.args[1].toString());
 		} else if (var2.op.name.equals("LtS")) {
-			printer.println("slt " + var2.dest.toString() + " " + var2.args[0].toString() + " " + var2.args[1].toString()); // TODO: 3/15/2020 slti
+			if (var2.args[0].toString().matches("\\d+") || var2.args[1].toString().matches("\\d+")) {
+				printer.println("slti " + var2.dest.toString() + " " + var2.args[0].toString() + " " + var2.args[1].toString());
+			} else {
+				printer.println("slt " + var2.dest.toString() + " " + var2.args[0].toString() + " " + var2.args[1].toString());
+			}
 		} else if (var2.op.name.equals("HeapAllocZ")) {
 			printer.println("li $a0 " + var2.args[0].toString());
 			printer.println("jal _heapAlloc");
