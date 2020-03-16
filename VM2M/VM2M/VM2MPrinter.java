@@ -122,10 +122,16 @@ public class VM2MPrinter<MyPara, Sets, Throwable extends java.lang.Throwable> ex
 		if (str.charAt(0) == ':') return true;
 		else return false;
 	}
-
+	public boolean IsLocation(String str){
+		if(str.charAt(0)==':')return true;
+		else return false;
+	}
 	public Sets visit(MyPara var1, VAssign var2) throws Throwable {
 		PrintLabel(var2.sourcePos);
-		if (!IsDigit(var2.source.toString()))
+		if(IsLocation(var2.source.toString())){
+			printer.println("la "+var2.dest.toString()+" "+NoColon(var2.source.toString()));
+		}
+		else if (!IsDigit(var2.source.toString()))
 			printer.println("move " + var2.dest.toString() + " " + var2.source.toString());
 		else
 			printer.println("li " + var2.dest.toString() + " " + var2.source.toString());
