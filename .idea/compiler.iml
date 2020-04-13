@@ -23,5 +23,6 @@
         <jarDirectory url="file://$MODULE_DIR$" recursive="false" type="SOURCES" />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="vapor-parser" level="project" />
   </component>
 </module>
