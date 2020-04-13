@@ -1,4 +1,4 @@
-
+package TypeCheck.Dependencies;
 /* JavaCCOptions:KEEP_LINE_COL=null */
 /**
  * This exception is thrown when parse errors are encountered.
