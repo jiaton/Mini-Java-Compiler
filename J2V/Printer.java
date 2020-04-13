@@ -1,4 +1,4 @@
-package TypeCheck;
+package J2V;
 
 public class Printer {
     public int numberOfIndentation = 0;

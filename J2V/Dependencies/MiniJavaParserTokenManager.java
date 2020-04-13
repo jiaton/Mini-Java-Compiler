@@ -1,14 +1,20 @@
-/** Token Manager. */
-public class MiniJavaParserTokenManager implements MiniJavaParserConstants
-{
+package J2V.Dependencies;
 
-  /** Debug output. */
-  public static  java.io.PrintStream debugStream = System.out;
-  /** Set debug output. */
-  public static  void setDebugStream(java.io.PrintStream ds) { debugStream = ds; }
-private static final int jjStopStringLiteralDfa_0(int pos, long active0)
-{
-   switch (pos)
+/**
+ * J2V.Dependencies.Token Manager.
+ */
+public class MiniJavaParserTokenManager implements MiniJavaParserConstants {
+
+   /** Debug output. */
+   public static java.io.PrintStream debugStream = System.out;
+
+   /** Set debug output. */
+   public static void setDebugStream(java.io.PrintStream ds) {
+      debugStream = ds;
+   }
+
+   private static final int jjStopStringLiteralDfa_0(int pos, long active0) {
+      switch (pos)
    {
       case 0:
          if ((active0 & 0x7ffff800000L) != 0L)
@@ -1040,7 +1046,7 @@ private static final boolean jjCanMove_1(int hiByte, int i1, int i2, long l1, lo
    }
 }
 
-/** Token literal values. */
+   /** J2V.Dependencies.Token literal values. */
 public static final String[] jjstrLiteralImages = {
 "", null, null, null, null, null, null, null, null, "\50", "\51", "\133", 
 "\135", "\173", "\175", "\73", "", "\75", "\74", "\53", "\55", "\46\46", "\41",
@@ -1144,7 +1150,7 @@ static int jjround;
 static int jjmatchedPos;
 static int jjmatchedKind;
 
-/** Get the next Token. */
+   /** Get the next J2V.Dependencies.Token. */
 public static Token getNextToken() 
 {
   Token specialToken = null;
