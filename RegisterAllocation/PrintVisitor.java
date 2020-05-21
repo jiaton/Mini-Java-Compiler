@@ -107,7 +107,7 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 		for (int i = 0; i < Math.min(myPara.paramAllocation.size(), 4); i++) {
 			save$aMap.put("$a" + i, "local[" + localIndex + "]");
 //			myPara.memoryAllocation.put(new Interval("$a" + i), "local[" + localIndex + "]");
-			printer.println("local[" + localIndex++ + "] = $a" + i); //todo change here
+			printer.println("local[" + localIndex++ + "] = $a" + i);
 		}
 
 		/*set $a, if more than 4, set out[]*/
@@ -156,7 +156,7 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 			printer.println(entry.getKey() + " = " + entry.getValue());
 		}
 		for (int i = 0; i < Math.min(myPara.paramAllocation.size(), 4); i++) {
-			printer.println("$a" + i + " = " + save$aMap.get("$a" + i)); //todo: change here
+			printer.println("$a" + i + " = " + save$aMap.get("$a" + i));
 		}
 
 		/*receive return value*/
@@ -192,9 +192,13 @@ public class PrintVisitor extends VInstr.VisitorPR<MyPara, MyReturn, Exception> 
 				printer.println(destRegString + " = " + vBuiltIn.op.name + "(" + firstRegString + ")");
 			}
 		} else if (vBuiltIn.op.name.equals("PrintIntS")) { //PrintIntS()
+			int localIndex = myPara.memoryAllocation.size();
 			Interval firstInterval = findIntervalOfVar(vBuiltIn.args[0].toString(), vBuiltIn.args[0].sourcePos, myPara.intervalMap);
 			String firstRegString = findRegOrLocal(firstInterval, myPara.registerAllocation, myPara.memoryAllocation, myPara.paramAllocation);
+			printer.println("local[" + localIndex + "] = $a0"); //backup and restore $a0 cuz it will be written by printIntS()
 			printer.println(vBuiltIn.op.name + "(" + firstRegString + ")");
+			printer.println("$a0" + " = local[" + localIndex + "]" );
+
 		} else { //Error("bla bla bla")
 			printer.println(vBuiltIn.op.name + "(" + vBuiltIn.args[0] + ")");
 		}
